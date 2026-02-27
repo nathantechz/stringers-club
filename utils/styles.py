@@ -224,7 +224,7 @@ input, textarea, select,
     box-shadow: 0 0 0 3px rgba(56,189,248,0.22) !important;
 }
 
-/* ── Selectbox trigger ── */
+/* ── Selectbox trigger (closed state) ── */
 [data-baseweb="select"] {
     background: var(--card) !important;
     border-radius: var(--radius-sm) !important;
@@ -235,11 +235,19 @@ input, textarea, select,
     border-radius: var(--radius-sm) !important;
     color: var(--text) !important;
 }
-/* Selected value text inside trigger */
-[data-baseweb="select"] [data-testid="stMarkdownContainer"] p,
-[data-baseweb="select"] span,
-[data-baseweb="select"] div[class*="singleValue"],
-[data-baseweb="select"] div[class*="placeholder"] {
+/* Selected value + placeholder text in the closed trigger — must stay light */
+[data-testid="stSelectbox"] span,
+[data-testid="stSelectbox"] div[class*="singleValue"],
+[data-testid="stSelectbox"] div[class*="placeholder"],
+[data-testid="stSelectbox"] [data-baseweb="select"] span,
+[data-testid="stSelectbox"] [data-baseweb="select"] div,
+[data-testid="stSelectbox"] [data-baseweb="select"] p,
+[data-testid="stMultiSelect"] span,
+[data-testid="stMultiSelect"] div[class*="singleValue"],
+[data-testid="stMultiSelect"] [data-baseweb="select"] span,
+[data-baseweb="select"] > div span,
+[data-baseweb="select"] > div div[class*="Value"],
+[data-baseweb="select"] > div [data-value] {
     color: var(--text) !important;
 }
 /* Dropdown arrow icon */
@@ -262,10 +270,18 @@ input, textarea, select,
 [role="option"],
 li[data-baseweb="option"] {
     background: var(--dropdown-bg) !important;
-    color: var(--dropdown-text) !important;
+    color: #0d1021 !important;
     font-size: 0.92rem !important;
     font-weight: 600 !important;
     border: none !important;
+}
+/* Make sure all text nodes inside menu options are dark */
+[data-baseweb="menu"] span,
+[data-baseweb="menu"] div,
+[data-baseweb="menu"] p,
+[role="listbox"] span,
+[role="option"] span {
+    color: #0d1021 !important;
 }
 /* Option hover */
 li[data-baseweb="option"]:hover,
