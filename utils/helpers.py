@@ -1,4 +1,11 @@
 """Shared helper utilities used across multiple pages."""
+import streamlit as st
+
+
+def show_back_button():
+    """Renders a small Home button at the top of every inner page."""
+    st.page_link("app.py", label="🏠 Home", use_container_width=False)
+    st.divider()
 
 
 def skill_label(v: int) -> str:

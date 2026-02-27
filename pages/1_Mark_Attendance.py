@@ -11,9 +11,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from utils.supabase_client import get_client
 from utils.styles import inject_mobile_css
+from utils.helpers import show_back_button
 
 st.set_page_config(page_title="Mark Attendance", page_icon="📋", layout="centered")
 inject_mobile_css()
+show_back_button()
 st.markdown("## 📋 Mark Attendance")
 
 sb = get_client()

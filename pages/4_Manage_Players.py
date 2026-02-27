@@ -10,10 +10,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from utils.supabase_client import get_client
 from utils.styles import inject_mobile_css
-from utils.helpers import skill_label, WORK_TIMINGS
+from utils.helpers import skill_label, WORK_TIMINGS, show_back_button
 
 st.set_page_config(page_title="Manage Players", page_icon="🧑‍🤝‍🧑", layout="centered")
 inject_mobile_css()
+show_back_button()
 st.markdown("## 🧑‍🤝‍🧑 Manage Players")
 
 sb = get_client()
