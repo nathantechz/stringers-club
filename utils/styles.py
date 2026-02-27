@@ -25,10 +25,10 @@ def inject_mobile_css():
     --text:      #e8edff;
     --text-inv:  #0d1021;
     --muted:     #7c85b0;
-    --dropdown-bg:   #1e2440;
-    --dropdown-text: #e8edff;
-    --option-hover:  #273059;
-    --option-sel:    #1a3a5c;
+    --dropdown-bg:   #fef08a;
+    --dropdown-text: #0d1021;
+    --option-hover:  #fde047;
+    --option-sel:    #facc15;
     --radius:    16px;
     --radius-sm: 10px;
 }
@@ -250,7 +250,7 @@ input, textarea, select,
 [data-baseweb="popover"] > div,
 [data-baseweb="menu"] {
     background: var(--dropdown-bg) !important;
-    border: 1.5px solid var(--accent2) !important;
+    border: 1.5px solid #f59e0b !important;
     border-radius: var(--radius-sm) !important;
     box-shadow: 0 8px 32px rgba(0,0,0,0.55) !important;
     color: var(--dropdown-text) !important;
@@ -264,6 +264,7 @@ li[data-baseweb="option"] {
     background: var(--dropdown-bg) !important;
     color: var(--dropdown-text) !important;
     font-size: 0.92rem !important;
+    font-weight: 600 !important;
     border: none !important;
 }
 /* Option hover */
@@ -271,21 +272,21 @@ li[data-baseweb="option"]:hover,
 [role="option"]:hover,
 [data-baseweb="option"]:hover {
     background: var(--option-hover) !important;
-    color: var(--accent2) !important;
+    color: #0d1021 !important;
     cursor: pointer;
 }
 /* Option selected/active */
 li[data-baseweb="option"][aria-selected="true"],
 [role="option"][aria-selected="true"] {
     background: var(--option-sel) !important;
-    color: var(--accent) !important;
-    font-weight: 700 !important;
+    color: #0d1021 !important;
+    font-weight: 800 !important;
 }
 /* Option focused via keyboard */
 li[data-baseweb="option"]:focus,
 [role="option"]:focus {
     background: var(--option-hover) !important;
-    color: var(--accent2) !important;
+    color: #0d1021 !important;
     outline: none !important;
 }
 /* Multiselect tag pill */
