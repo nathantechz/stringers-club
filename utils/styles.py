@@ -39,7 +39,7 @@ html, body, [data-testid="stAppViewContainer"] {
 [data-testid="stMainBlockContainer"] {
     max-width: 460px !important;
     margin: 0 auto !important;
-    padding: 12px 16px 80px 16px !important;
+    padding: 56px 16px 80px 16px !important;
 }
 
 /* ── Hide default streamlit chrome (keep header for sidebar toggle on mobile) ── */
