@@ -40,6 +40,39 @@ html, body, [data-testid="stAppViewContainer"] {
     color: var(--text) !important;
 }
 
+/* ── All block containers — prevent Streamlit injecting a dark/black bg on rerun ── */
+[data-testid="stVerticalBlock"],
+[data-testid="stVerticalFlexBlock"],
+[data-testid="stHorizontalBlock"],
+[data-testid="stColumn"],
+[data-testid="column"],
+[data-testid="stTabsContent"],
+[data-baseweb="tab-panel"],
+[data-testid="stMain"],
+.main .block-container,
+section[data-testid="stSidebar"] > div,
+div[class*="stTabsContent"],
+div[class*="block-container"] {
+    background-color: transparent !important;
+    color: var(--text) !important;
+}
+
+/* Ensure text inside all containers is always readable */
+[data-testid="stVerticalBlock"] *,
+[data-testid="stVerticalFlexBlock"] *,
+[data-testid="stTabsContent"] *,
+[data-baseweb="tab-panel"] * {
+    color: inherit;
+}
+[data-testid="stVerticalBlock"] p,
+[data-testid="stVerticalFlexBlock"] p,
+[data-testid="stTabsContent"] p,
+[data-baseweb="tab-panel"] p,
+[data-testid="stVerticalBlock"] span,
+[data-baseweb="tab-panel"] span {
+    color: var(--text) !important;
+}
+
 /* ── Centre + constrain to iPhone 16 Plus width (430 px) desktop frame ── */
 [data-testid="stMain"] > div:first-child,
 [data-testid="stMainBlockContainer"] {
@@ -347,9 +380,21 @@ hr { border: none !important; border-top: 1.5px solid var(--border) !important; 
 [data-baseweb="tab-list"] { background: var(--card) !important; border-radius: var(--radius-sm) !important; padding: 4px !important; }
 [data-baseweb="tab"] { background: transparent !important; color: var(--muted) !important; border-radius: 8px !important; font-weight: 600 !important; transition: background 0.15s, color 0.15s; }
 [data-baseweb="tab"]:hover { color: var(--accent2) !important; }
-[aria-selected="true"][data-baseweb="tab"] { background: var(--accent2) !important; color: var(--text-inv) !important; }
+[aria-selected="true"][data-baseweb="tab"] { background: var(--accent2) !important; color: #03140a !important; }
 [data-baseweb="tab-highlight"] { background: var(--accent2) !important; }
 [data-baseweb="tab-border"] { background: transparent !important; }
+/* Tab panel itself — always transparent so page bg shows through */
+[data-baseweb="tab-panel"] {
+    background: transparent !important;
+    padding-top: 16px !important;
+}
+
+/* stMarkdownContainer inside tabs */
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stMarkdownContainer"] span {
+    color: var(--text) !important;
+}
 
 /* ── Checkbox ── */
 [data-testid="stCheckbox"] label { font-size: 0.88rem !important; color: var(--text) !important; text-transform: none !important; letter-spacing: normal !important; }
