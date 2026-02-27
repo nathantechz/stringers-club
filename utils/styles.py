@@ -42,9 +42,30 @@ html, body, [data-testid="stAppViewContainer"] {
     padding: 12px 16px 80px 16px !important;
 }
 
-/* ── Hide default streamlit chrome ── */
-#MainMenu, footer, [data-testid="stHeader"],
+/* ── Hide default streamlit chrome (keep header for sidebar toggle on mobile) ── */
+#MainMenu, footer,
 [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
+
+/* Keep header visible but make it blend with dark theme */
+[data-testid="stHeader"] {
+    background: var(--bg) !important;
+    border-bottom: 1px solid var(--border) !important;
+}
+/* Hide only the deploy/github buttons inside the header */
+[data-testid="stHeader"] [data-testid="stActionButtonLabel"] { display: none !important; }
+
+/* Make the sidebar hamburger toggle more prominent on mobile */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarCollapseButton"] {
+    background: var(--accent) !important;
+    border-radius: 10px !important;
+    padding: 4px !important;
+}
+[data-testid="stSidebarCollapsedControl"] svg,
+[data-testid="stSidebarCollapseButton"] svg {
+    fill: #05170b !important;
+    color: #05170b !important;
+}
 
 /* ── Sidebar → slide-in drawer feel ── */
 [data-testid="stSidebar"] {
@@ -228,6 +249,49 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
     align-items: center;
     gap: 8px;
     margin-bottom: 16px;
+}
+
+/* ── Nav card grid (home page) ── */
+.nav-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    padding: 18px 8px !important;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    text-decoration: none !important;
+    min-height: 90px;
+}
+.nav-card:hover { border-color: var(--accent) !important; background: var(--surface) !important; }
+.nav-card .icon { font-size: 1.8rem; margin-bottom: 6px; }
+.nav-card .label { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+
+/* st.page_link styling */
+[data-testid="stPageLink"] a {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--card) !important;
+    border: 1.5px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    padding: 16px 8px !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    min-height: 80px !important;
+    transition: border-color 0.15s;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
+}
+[data-testid="stPageLink"] a:hover {
+    border-color: var(--accent) !important;
+    background: var(--surface) !important;
 }
 </style>
 """, unsafe_allow_html=True)

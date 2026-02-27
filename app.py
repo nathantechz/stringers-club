@@ -35,17 +35,32 @@ except Exception as e:
     st.warning(f"⚠️ Cannot connect to Supabase — check `.env`.\n\n`{e}`")
 
 st.divider()
+st.markdown("### Quick Navigation")
 
-st.markdown("""
-**Use the sidebar (☰) to navigate:**
+# Row 1
+c1, c2 = st.columns(2)
+with c1:
+    st.page_link("pages/1_Mark_Attendance.py",    label="📋 Mark\nAttendance",      use_container_width=True)
+with c2:
+    st.page_link("pages/2_Player_Profiles.py",    label="👤 Player\nProfiles",        use_container_width=True)
 
-| Page | Purpose |
-|---|---|
-| 📋 Mark Attendance | Mark players present + set fees |
-| 👤 Player Profiles | Full history & dues per player |
-| 💳 Record Payment | Apply payment to sessions |
-| 🧑‍🤝‍🧑 Manage Players | Add / edit all players |
-| 📅 Monthly Settlement | Spread monthly fee across days |
+# Row 2
+c3, c4 = st.columns(2)
+with c3:
+    st.page_link("pages/3_Record_Payment.py",     label="💳 Record\nPayment",         use_container_width=True)
+with c4:
+    st.page_link("pages/4_Manage_Players.py",     label="🧑‍🤝‍🧑 Manage\nPlayers",   use_container_width=True)
 
-**Sessions:** 7–8 AM & 7–8 PM · Mon–Fri · Court 1 & Court 2
-""")
+# Row 3
+c5, c6 = st.columns(2)
+with c5:
+    st.page_link("pages/5_Monthly_Settlement.py", label="📅 Monthly\nSettlement",     use_container_width=True)
+with c6:
+    st.page_link("pages/6_Analytics.py",          label="📊 Analytics",               use_container_width=True)
+
+# Row 4 centre
+c7, c8 = st.columns(2)
+with c7:
+    st.page_link("pages/7_Expenditure.py",        label="💸 Expenditure",             use_container_width=True)
+
+st.caption("Sessions: 7–8 AM & 7–8 PM · Pro Sports Arena, Kothanur")
