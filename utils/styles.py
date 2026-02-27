@@ -24,7 +24,7 @@ def inject_mobile_css():
     --danger:    #f87171;
     --text:      #e8edff;
     --text-inv:  #0d1021;
-    --muted:     #7c85b0;
+    --muted:     #86efac;
     --dropdown-bg:   #fef08a;
     --dropdown-text: #0d1021;
     --option-hover:  #fde047;
@@ -395,7 +395,7 @@ hr { border: none !important; border-top: 1.5px solid var(--border) !important; 
 
 /* ── Tab / radio style selectors ── */
 [data-baseweb="tab-list"] { background: var(--card) !important; border-radius: var(--radius-sm) !important; padding: 4px !important; }
-[data-baseweb="tab"] { background: transparent !important; color: var(--muted) !important; border-radius: 8px !important; font-weight: 600 !important; transition: background 0.15s, color 0.15s; }
+[data-baseweb="tab"] { background: transparent !important; color: #86efac !important; border-radius: 8px !important; font-weight: 600 !important; transition: background 0.15s, color 0.15s; }
 [data-baseweb="tab"]:hover { color: var(--accent2) !important; }
 [aria-selected="true"][data-baseweb="tab"] { background: var(--accent2) !important; color: #03140a !important; }
 [data-baseweb="tab-highlight"] { background: var(--accent2) !important; }
@@ -411,6 +411,44 @@ hr { border: none !important; border-top: 1.5px solid var(--border) !important; 
 [data-testid="stMarkdownContainer"] li,
 [data-testid="stMarkdownContainer"] span {
     color: var(--text) !important;
+}
+
+/* ── Streamlit native grey text overrides — captions, help, placeholder, small text ── */
+[data-testid="stCaptionContainer"] p,
+[data-testid="stCaptionContainer"],
+.st-emotion-cache-nahz7x,
+[data-testid="stWidgetLabel"] small,
+[data-testid="stText"],
+[data-testid="stText"] p,
+small,
+.caption,
+figcaption {
+    color: #86efac !important;
+}
+/* Placeholder text in inputs */
+input::placeholder,
+textarea::placeholder {
+    color: #86efac !important;
+    opacity: 0.7;
+}
+/* Number input +/- stepper buttons */
+[data-testid="stNumberInput"] button {
+    color: #86efac !important;
+    border-color: #86efac !important;
+}
+/* Help/info icon next to labels */
+[data-testid="stTooltipIcon"] svg {
+    fill: #86efac !important;
+    color: #86efac !important;
+}
+/* st.caption() */
+[data-testid="stCaptionContainer"] * { color: #86efac !important; }
+/* Any remaining Streamlit muted/secondary text */
+.st-emotion-cache-16idsys p,
+.st-emotion-cache-1gulkj5,
+[class*="caption"],
+[class*="helpText"] {
+    color: #86efac !important;
 }
 
 /* ── Checkbox ── */
@@ -432,7 +470,7 @@ hr { border: none !important; border-top: 1.5px solid var(--border) !important; 
 
 /* ── Table for markdown ── */
 table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-th { background: var(--card); color: var(--muted); padding: 8px 10px; text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing:0.5px; }
+th { background: var(--card); color: #86efac; padding: 8px 10px; text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing:0.5px; }
 td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
 
 /* ── Columns: stack on very narrow ── */
