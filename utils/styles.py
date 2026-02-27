@@ -42,29 +42,47 @@ html, body, [data-testid="stAppViewContainer"] {
     padding: 56px 16px 80px 16px !important;
 }
 
-/* ── Hide default streamlit chrome (keep header for sidebar toggle on mobile) ── */
+/* ── Hide default streamlit chrome ── */
 #MainMenu, footer,
 [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
 
-/* Keep header visible but make it blend with dark theme */
+/* Keep header visible but transparent/dark — contains sidebar toggle */
 [data-testid="stHeader"] {
     background: var(--bg) !important;
     border-bottom: 1px solid var(--border) !important;
+    z-index: 999 !important;
 }
-/* Hide only the deploy/github buttons inside the header */
-[data-testid="stHeader"] [data-testid="stActionButtonLabel"] { display: none !important; }
 
-/* Make the sidebar hamburger toggle more prominent on mobile */
-[data-testid="stSidebarCollapsedControl"],
-[data-testid="stSidebarCollapseButton"] {
-    background: var(--accent) !important;
+/* Hide only the deploy/share/github icon buttons in header, keep sidebar toggle */
+[data-testid="stHeader"] [data-testid="stActionButtonLabel"],
+[data-testid="stHeader"] [data-testid^="stActionButton"]:not([data-testid="stSidebarCollapsedControl"]) {
+    display: none !important;
+}
+
+/* ── Sidebar toggle — always visible, clean style ── */
+[data-testid="stSidebarCollapsedControl"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1000 !important;
+}
+[data-testid="stSidebarCollapsedControl"] button,
+[data-testid="stSidebarCollapseButton"] button {
+    background: var(--card) !important;
+    border: 1.5px solid var(--accent) !important;
     border-radius: 10px !important;
-    padding: 4px !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 [data-testid="stSidebarCollapsedControl"] svg,
 [data-testid="stSidebarCollapseButton"] svg {
-    fill: #05170b !important;
-    color: #05170b !important;
+    fill: var(--accent) !important;
+    color: var(--accent) !important;
+    width: 20px !important;
+    height: 20px !important;
 }
 
 /* ── Sidebar → slide-in drawer feel ── */
