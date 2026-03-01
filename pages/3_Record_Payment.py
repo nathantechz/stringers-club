@@ -1,12 +1,17 @@
 """
-Page 3 — Record / Edit Payment
-• Tab 1: Apply a new payment to one or more attendance sessions.
-• Tab 2: Edit or delete an existing payment record, or directly
-         adjust the amount_paid on individual session rows.
+Page 3 — Record Payment  (revamped)
+
+Three payment workflows:
+  • ⚡ Quick Pay   — daily players pay for today's / recent session on the spot
+  • 📅 Monthly     — monthly members pay a lump sum upfront for the month
+  • 📋 Sessions    — pick any unpaid sessions and settle them (works for both)
+
+Tab 2: History & edit / delete past payments.
 """
 
 import streamlit as st
 from datetime import date
+import calendar
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -17,26 +22,381 @@ from utils.helpers import show_back_button
 st.set_page_config(page_title="Record Payment", page_icon="💳", layout="centered")
 inject_mobile_css()
 show_back_button()
-st.markdown("## 💳 Record / Edit Payment")
+st.markdown("## 💳 Record Payment")
 
 sb = get_client()
 
+# ── Player selector ───────────────────────────────────────────────────────────
 players_raw = sb.table("players").select("*").eq("is_active", True).order("name").execute().data
 if not players_raw:
     st.info("No active players. Add some on the Manage Players page.")
     st.stop()
 
-# Player selection lives ABOVE the tabs so changing it doesn't fight with tab state
 player_name = st.selectbox("Select player", [p["name"] for p in players_raw], key="player_select")
-player = next(p for p in players_raw if p["name"] == player_name)
-p_id = player["id"]
+player     = next(p for p in players_raw if p["name"] == player_name)
+p_id       = player["id"]
+is_monthly = player.get("membership_type") == "monthly"
 
-tab_new, tab_edit = st.tabs(["➕ Record New", "✏️ Edit Existing"])
+# ── Player status card ────────────────────────────────────────────────────────
+all_att = (
+    sb.table("attendance")
+    .select("fee_charged, amount_paid")
+    .eq("player_id", p_id)
+    .execute()
+    .data
+)
+total_due      = sum((r["fee_charged"] or 0) - (r["amount_paid"] or 0) for r in all_att)
+total_charged  = sum(r["fee_charged"]  or 0 for r in all_att)
+total_paid_all = sum(r["amount_paid"]  or 0 for r in all_att)
+
+mem_color = "var(--accent3)" if is_monthly else "var(--accent2)"
+mem_label = "📅 Monthly member" if is_monthly else "🏸 Daily / Regular"
+st.markdown(
+    f"<span style='background:rgba(2,132,199,0.08);border:1.5px solid {mem_color};"
+    f"border-radius:50px;padding:4px 14px;font-size:0.82rem;font-weight:700;"
+    f"color:{mem_color};'>{mem_label}</span>",
+    unsafe_allow_html=True,
+)
+st.write("")
+
+mc1, mc2, mc3 = st.columns(3)
+mc1.metric("Balance Due",   f"₹{total_due:,.0f}")
+mc2.metric("Total Charged", f"₹{total_charged:,.0f}")
+mc3.metric("Total Paid",    f"₹{total_paid_all:,.0f}")
+
+st.divider()
+
+tab_pay, tab_history = st.tabs(["💳 Record Payment", "📜 History & Edit"])
+
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 1 — Record New Payment
+# TAB 1 — Record Payment
 # ══════════════════════════════════════════════════════════════════════════════
-with tab_new:
+with tab_pay:
+
+    default_mode = "📅 Monthly Lump Sum" if is_monthly else "⚡ Quick Pay (today's session)"
+    MODE_OPTS = [
+        "⚡ Quick Pay (today's session)",
+        "📅 Monthly Lump Sum",
+        "📋 Settle Pending Sessions",
+    ]
+    pay_mode = st.radio(
+        "Payment type",
+        MODE_OPTS,
+        index=MODE_OPTS.index(default_mode),
+        horizontal=False,
+        key="pay_mode_radio",
+    )
+    st.divider()
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # MODE 1 — Quick Pay: today's or most recent unpaid session(s)
+    # ──────────────────────────────────────────────────────────────────────────
+    if pay_mode == "⚡ Quick Pay (today's session)":
+        today_str = str(date.today())
+
+        today_att = (
+            sb.table("attendance")
+            .select("*")
+            .eq("player_id", p_id)
+            .eq("session_date", today_str)
+            .order("session_time")
+            .execute()
+            .data
+        )
+
+        recent_unpaid = []
+        if not today_att:
+            recent_unpaid = (
+                sb.table("attendance")
+                .select("*")
+                .eq("player_id", p_id)
+                .lt("session_date", today_str)
+                .order("session_date", desc=True)
+                .limit(6)
+                .execute()
+                .data
+            )
+            recent_unpaid = [r for r in recent_unpaid
+                             if round((r["fee_charged"] or 0) - (r["amount_paid"] or 0), 2) > 0]
+
+        sessions_to_show = today_att if today_att else recent_unpaid
+
+        if not sessions_to_show:
+            st.info(f"No sessions found for {player_name} today and no recent unpaid sessions.")
+        else:
+            if today_att:
+                st.subheader(f"Today — {date.today().strftime('%A, %d %b %Y')}")
+            else:
+                st.subheader("Recent unpaid sessions")
+
+            for r in sessions_to_show:
+                charged = r["fee_charged"] or 0
+                paid    = r["amount_paid"] or 0
+                due     = round(charged - paid, 2)
+
+                with st.container(border=True):
+                    ca, cb = st.columns([3, 2])
+                    ca.markdown(f"**{r['session_date']}** · {r['session_time'].title()}")
+                    ca.caption(f"Fee ₹{charged:.2f}  ·  Paid ₹{paid:.2f}  ·  Due ₹{due:.2f}")
+
+                    if due > 0:
+                        qp_amt = cb.number_input(
+                            "Amount (₹)",
+                            min_value=0.0,
+                            max_value=float(charged),
+                            value=float(due),
+                            step=10.0,
+                            key=f"qp_amt_{r['id']}",
+                            label_visibility="collapsed",
+                        )
+                        pay_method = cb.selectbox(
+                            "Method",
+                            ["Cash", "UPI", "Bank Transfer", "Other"],
+                            key=f"qp_method_{r['id']}",
+                            label_visibility="collapsed",
+                        )
+                        if cb.button(
+                            f"💰 Pay ₹{qp_amt:.0f}",
+                            key=f"qp_btn_{r['id']}",
+                            use_container_width=True,
+                            type="primary",
+                        ):
+                            new_paid = round(paid + qp_amt, 2)
+                            pr = sb.table("payments").insert({
+                                "player_id":    p_id,
+                                "amount":       qp_amt,
+                                "payment_date": today_str,
+                                "notes":        pay_method,
+                            }).execute()
+                            pay_id = pr.data[0]["id"]
+                            sb.table("attendance").update({"amount_paid": new_paid}).eq("id", r["id"]).execute()
+                            sb.table("payment_attendance").insert({
+                                "payment_id":    pay_id,
+                                "attendance_id": r["id"],
+                                "applied_amount": qp_amt,
+                            }).execute()
+                            st.success(f"✅ ₹{qp_amt:.2f} recorded via {pay_method}.")
+                            st.rerun()
+                    else:
+                        cb.success("Cleared ✅")
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # MODE 2 — Monthly Lump Sum
+    # ──────────────────────────────────────────────────────────────────────────
+    elif pay_mode == "📅 Monthly Lump Sum":
+        today2 = date.today()
+        month_opts = sorted(
+            {f"{today2.year}-{m:02d}" for m in range(1, today2.month + 1)}
+            | {f"{today2.year - 1}-{m:02d}" for m in range(1, 13)},
+            reverse=True,
+        )
+        sel_month = st.selectbox("Month", month_opts, key="lump_month")
+        yr, mo    = map(int, sel_month.split("-"))
+        from_dt   = f"{sel_month}-01"
+        last_d    = calendar.monthrange(yr, mo)[1]
+        to_dt     = f"{sel_month}-{last_d:02d}"
+
+        fee_conf = (
+            sb.table("monthly_fee_config")
+            .select("monthly_fee")
+            .eq("player_id", p_id)
+            .eq("month", sel_month)
+            .execute()
+            .data
+        )
+        default_fee = fee_conf[0]["monthly_fee"] if fee_conf else (player.get("monthly_fee") or 0.0)
+
+        month_att = (
+            sb.table("attendance")
+            .select("fee_charged, amount_paid")
+            .eq("player_id", p_id)
+            .gte("session_date", from_dt)
+            .lte("session_date", to_dt)
+            .execute()
+            .data
+        )
+        month_sessions = len(month_att)
+        month_paid     = sum(r["amount_paid"] or 0 for r in month_att)
+
+        mm1, mm2, mm3 = st.columns(3)
+        mm1.metric("Sessions this month", month_sessions)
+        mm2.metric("Already paid",        f"₹{month_paid:.0f}")
+        mm3.metric("Monthly fee",         f"₹{default_fee:.0f}")
+        st.write("")
+
+        with st.form("lump_sum_form"):
+            lump_amount = st.number_input(
+                "Amount received (₹)",
+                min_value=0.0,
+                step=100.0,
+                value=float(max(0.0, default_fee - month_paid)),
+            )
+            ls1, ls2    = st.columns(2)
+            lump_date   = ls1.date_input("Payment date", value=date.today())
+            lump_method = ls2.selectbox("Method", ["Cash", "UPI", "Bank Transfer", "Other"])
+            lump_notes  = st.text_input("Additional notes (optional)")
+            distribute  = st.checkbox(
+                "Distribute equally across this month's sessions",
+                value=(month_sessions > 0),
+                help="Splits the amount across all sessions attended this month",
+            )
+            lump_save = st.form_submit_button("💾 Record Payment", type="primary", use_container_width=True)
+
+            if lump_save:
+                if lump_amount <= 0:
+                    st.error("Amount must be > ₹0.")
+                else:
+                    note_parts = [f"{sel_month} monthly", lump_method]
+                    if lump_notes:
+                        note_parts.append(lump_notes)
+                    pr = sb.table("payments").insert({
+                        "player_id":    p_id,
+                        "amount":       lump_amount,
+                        "payment_date": str(lump_date),
+                        "notes":        " — ".join(note_parts),
+                    }).execute()
+                    pay_id = pr.data[0]["id"]
+
+                    if distribute and month_sessions > 0:
+                        month_att_full = (
+                            sb.table("attendance")
+                            .select("id, amount_paid")
+                            .eq("player_id", p_id)
+                            .gte("session_date", from_dt)
+                            .lte("session_date", to_dt)
+                            .execute()
+                            .data
+                        )
+                        per_sess = round(lump_amount / len(month_att_full), 2)
+                        for r in month_att_full:
+                            new_paid = round((r["amount_paid"] or 0) + per_sess, 2)
+                            sb.table("attendance").update({"amount_paid": new_paid}).eq("id", r["id"]).execute()
+                            sb.table("payment_attendance").insert({
+                                "payment_id":    pay_id,
+                                "attendance_id": r["id"],
+                                "applied_amount": per_sess,
+                            }).execute()
+                        st.success(
+                            f"✅ ₹{lump_amount:.2f} recorded and split across "
+                            f"{len(month_att_full)} sessions (₹{per_sess:.2f} each)."
+                        )
+                    else:
+                        st.success(f"✅ ₹{lump_amount:.2f} recorded for {sel_month}.")
+                    st.rerun()
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # MODE 3 — Settle Pending Sessions (any date range)
+    # ──────────────────────────────────────────────────────────────────────────
+    else:
+        today3   = date.today()
+        fc1, fc2 = st.columns(2)
+        from_d3  = fc1.date_input("From", value=date(today3.year, today3.month, 1), key="sp_from")
+        to_d3    = fc2.date_input("To",   value=today3, key="sp_to")
+
+        all_sess = (
+            sb.table("attendance")
+            .select("*")
+            .eq("player_id", p_id)
+            .gte("session_date", str(from_d3))
+            .lte("session_date", str(to_d3))
+            .order("session_date", desc=True)
+            .execute()
+            .data
+        )
+        pending = [r for r in all_sess
+                   if round((r["fee_charged"] or 0) - (r["amount_paid"] or 0), 2) > 0]
+
+        if not pending:
+            st.success(f"✅ No pending dues for {player_name} in this date range.")
+        else:
+            st.caption(f"{len(pending)} session(s) with outstanding balance")
+
+            sa1, sa2   = st.columns(2)
+            select_all = sa1.button("☑️ Select All", use_container_width=True, key="sp_sel_all")
+            clear_all  = sa2.button("🔲 Clear All",  use_container_width=True, key="sp_clr_all")
+
+            selected_ids     = []
+            selected_amounts = []
+
+            for r in pending:
+                due = round((r["fee_charged"] or 0) - (r["amount_paid"] or 0), 2)
+                with st.container(border=True):
+                    cl, cr  = st.columns([3, 2])
+                    default_checked = select_all and not clear_all
+                    checked = cl.checkbox(
+                        f"**{r['session_date']}** · {r['session_time'].title()}",
+                        key=f"sp_chk_{r['id']}",
+                        value=default_checked,
+                    )
+                    cl.caption(
+                        f"Fee ₹{r['fee_charged'] or 0:.2f}  ·  "
+                        f"Paid ₹{r['amount_paid'] or 0:.2f}  ·  Due ₹{due:.2f}"
+                    )
+                    pay_amt = cr.number_input(
+                        "Pay (₹)",
+                        min_value=0.0,
+                        max_value=float(r["fee_charged"] or due),
+                        value=float(due),
+                        step=10.0,
+                        key=f"sp_amt_{r['id']}",
+                    )
+                    if checked:
+                        selected_ids.append(r["id"])
+                        selected_amounts.append(pay_amt)
+
+            selected_total = sum(selected_amounts)
+            if selected_ids:
+                st.markdown(f"### Total to collect: ₹{selected_total:,.2f}")
+            st.divider()
+
+            with st.form("settle_sessions_form"):
+                sf1, sf2   = st.columns(2)
+                pay_date   = sf1.date_input("Payment date", value=date.today())
+                pay_method = sf2.selectbox("Method", ["Cash", "UPI", "Bank Transfer", "Other"])
+                pay_notes  = st.text_input("Additional notes (optional)")
+                save_btn   = st.form_submit_button("💾 Record Payment", type="primary", use_container_width=True)
+
+                if save_btn:
+                    if not selected_ids:
+                        st.error("Please select at least one session.")
+                    elif selected_total <= 0:
+                        st.error("Total must be > ₹0.")
+                    else:
+                        note_str = pay_method + (f" — {pay_notes}" if pay_notes else "")
+                        pr = sb.table("payments").insert({
+                            "player_id":    p_id,
+                            "amount":       selected_total,
+                            "payment_date": str(pay_date),
+                            "notes":        note_str,
+                        }).execute()
+                        pay_id = pr.data[0]["id"]
+
+                        for att_id, amt in zip(selected_ids, selected_amounts):
+                            att = next(r for r in pending if r["id"] == att_id)
+                            new_paid = round((att["amount_paid"] or 0) + amt, 2)
+                            sb.table("attendance").update({"amount_paid": new_paid}).eq("id", att_id).execute()
+                            sb.table("payment_attendance").insert({
+                                "payment_id":    pay_id,
+                                "attendance_id": att_id,
+                                "applied_amount": amt,
+                            }).execute()
+
+                        updated = (
+                            sb.table("attendance")
+                            .select("fee_charged, amount_paid")
+                            .eq("player_id", p_id)
+                            .execute()
+                            .data
+                        )
+                        new_bal = sum((r["fee_charged"] or 0) - (r["amount_paid"] or 0) for r in updated)
+                        st.success(
+                            f"✅ ₹{selected_total:.2f} recorded via {pay_method}. "
+                            f"Overall balance remaining: ₹{new_bal:.2f}"
+                        )
+                        st.rerun()
+
+
 
     att_rows = (
         sb.table("attendance")
@@ -141,23 +501,92 @@ with tab_new:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 2 — Edit Existing Payment
+# TAB 2 — History & Edit
 # ══════════════════════════════════════════════════════════════════════════════
-with tab_edit:
-    # Reuse the player selected above the tabs
-    ep_id      = p_id
-    is_monthly = player.get("membership_type") == "monthly"
-    edit_player_name = player_name
-
-    badge_color = "var(--accent3)" if is_monthly else "var(--accent2)"
-    badge_label = "Monthly member" if is_monthly else "Daily / Regular"
-    st.markdown(
-        f"<span style='background:rgba(167,139,250,0.15);border:1px solid {badge_color};"
-        f"border-radius:50px;padding:3px 12px;font-size:0.78rem;font-weight:700;"
-        f"color:{badge_color};'>{badge_label}</span>",
-        unsafe_allow_html=True,
+with tab_history:
+    pay_records = (
+        sb.table("payments")
+        .select("*")
+        .eq("player_id", p_id)
+        .order("payment_date", desc=True)
+        .execute()
+        .data
     )
-    st.write("")
+
+    if not pay_records:
+        st.info(f"No payment history for {player_name} yet.")
+    else:
+        total_ever = sum(r["amount"] for r in pay_records)
+        st.metric("Total ever paid", f"₹{total_ever:,.2f}")
+        st.write("")
+
+        for r in pay_records:
+            with st.container(border=True):
+                h1, h2 = st.columns([5, 1])
+                h1.markdown(
+                    f"**{r['payment_date']}** &nbsp;·&nbsp; ₹{r['amount']:.2f}"
+                    + (f"  \n_{r['notes']}_" if r.get("notes") else "")
+                )
+
+                linked = (
+                    sb.table("payment_attendance")
+                    .select("attendance_id, applied_amount")
+                    .eq("payment_id", r["id"])
+                    .execute()
+                    .data
+                )
+                if linked:
+                    linked_ids = [l["attendance_id"] for l in linked]
+                    linked_att = (
+                        sb.table("attendance")
+                        .select("session_date, session_time")
+                        .in_("id", linked_ids)
+                        .execute()
+                        .data
+                    )
+                    h1.caption(
+                        "Sessions: " + ", ".join(
+                            f"{a.get('session_date', '?')} {a.get('session_time', '').title()}"
+                            for a in linked_att
+                        )
+                    )
+
+                if h2.button("🗑️", key=f"del_pay_{r['id']}", help="Delete this payment"):
+                    for lnk in linked:
+                        att = sb.table("attendance").select("amount_paid").eq("id", lnk["attendance_id"]).execute().data
+                        if att:
+                            rev = max(0.0, round((att[0]["amount_paid"] or 0) - (lnk["applied_amount"] or 0), 2))
+                            sb.table("attendance").update({"amount_paid": rev}).eq("id", lnk["attendance_id"]).execute()
+                    sb.table("payments").delete().eq("id", r["id"]).execute()
+                    st.success("🗑️ Payment deleted and session balances reversed.")
+                    st.rerun()
+
+        st.divider()
+        with st.expander("✏️ Edit a payment", expanded=False):
+            pay_labels = [
+                f"{r['payment_date']}  ·  ₹{r['amount']:.2f}"
+                + (f"  · {r['notes']}" if r.get("notes") else "")
+                for r in pay_records
+            ]
+            sel_label = st.selectbox("Choose payment", pay_labels, key="edit_pay_sel")
+            chosen    = pay_records[pay_labels.index(sel_label)]
+
+            with st.form("edit_payment_form"):
+                e1, e2     = st.columns(2)
+                new_amount = e1.number_input("Amount (₹)", min_value=0.0, step=10.0, value=float(chosen["amount"]))
+                new_date   = e2.date_input("Date", value=date.fromisoformat(str(chosen["payment_date"])[:10]))
+                new_notes  = st.text_input("Notes", value=chosen.get("notes") or "")
+                update_btn = st.form_submit_button("💾 Update Payment")
+
+                if update_btn:
+                    sb.table("payments").update({
+                        "amount":       new_amount,
+                        "payment_date": str(new_date),
+                        "notes":        new_notes or None,
+                    }).eq("id", chosen["id"]).execute()
+                    st.success("✅ Payment updated.")
+                    st.rerun()
+
 
     edit_mode = st.radio(
         "What to edit",
