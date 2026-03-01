@@ -216,6 +216,13 @@ input, textarea, select,
     font-size: 0.92rem !important;
     padding: 10px 12px !important;
 }
+/* Wildcard text colour for all input widget internals */
+[data-testid="stTextInput"] *,
+[data-testid="stNumberInput"] *,
+[data-testid="stDateInput"] *,
+[data-testid="stTimeInput"] * {
+    color: var(--text) !important;
+}
 [data-testid="stTextInput"] input:focus,
 [data-testid="stNumberInput"] input:focus {
     border-color: var(--accent2) !important;
@@ -226,34 +233,37 @@ input, textarea, select,
     box-shadow: 0 0 0 3px rgba(56,189,248,0.22) !important;
 }
 
-/* ── Selectbox trigger (closed state) ── */
-[data-baseweb="select"] {
+/* ── Selectbox / multiselect — closed trigger ── */
+/* Container */
+[data-baseweb="select"],
+[data-testid="stSelectbox"] [data-baseweb="select"],
+[data-testid="stMultiSelect"] [data-baseweb="select"] {
     background: var(--card) !important;
     border-radius: var(--radius-sm) !important;
 }
-[data-baseweb="select"] > div {
+/* Inner control div */
+[data-baseweb="select"] > div,
+[data-testid="stSelectbox"] [data-baseweb="select"] > div,
+[data-testid="stMultiSelect"] [data-baseweb="select"] > div {
     background: var(--card) !important;
     border: 1.5px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
     color: var(--text) !important;
 }
-/* Selected value + placeholder text in the closed trigger — must stay light */
-[data-testid="stSelectbox"] span,
-[data-testid="stSelectbox"] div[class*="singleValue"],
-[data-testid="stSelectbox"] div[class*="placeholder"],
-[data-testid="stSelectbox"] [data-baseweb="select"] span,
-[data-testid="stSelectbox"] [data-baseweb="select"] div,
-[data-testid="stSelectbox"] [data-baseweb="select"] p,
-[data-testid="stMultiSelect"] span,
-[data-testid="stMultiSelect"] div[class*="singleValue"],
-[data-testid="stMultiSelect"] [data-baseweb="select"] span,
-[data-baseweb="select"] > div span,
-[data-baseweb="select"] > div div[class*="Value"],
-[data-baseweb="select"] > div [data-value] {
+/* Nuclear wildcard — forces dark text on every child element regardless of
+   Streamlit's dynamically generated class names. Covers singleValue, placeholder,
+   ValueContainer, option counts, etc. */
+[data-testid="stSelectbox"] *,
+[data-testid="stMultiSelect"] * {
     color: var(--text) !important;
 }
-/* Dropdown arrow icon */
-[data-baseweb="select"] svg { fill: var(--accent2) !important; color: var(--accent2) !important; }
+/* Keep the dropdown chevron icon in accent colour (override the wildcard above) */
+[data-testid="stSelectbox"] svg,
+[data-testid="stMultiSelect"] svg,
+[data-baseweb="select"] svg {
+    fill: var(--accent2) !important;
+    color: var(--accent2) !important;
+}
 
 /* ── Dropdown popover / menu panel ── */
 [data-baseweb="popover"],
