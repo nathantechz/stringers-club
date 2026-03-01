@@ -39,7 +39,17 @@ try:
     # ── Derived totals ────────────────────────────────────────────────────────
     total_charged  = sum(r["fee_charged"] or 0 for r in attendance)
     total_paid     = sum(r["amount"]      or 0 for r in payments_all)
-    total_due      = total_charged - total_paid
+
+    # Per-player balance (positive = owes money, negative = overpaid/prepaid)
+    due_by_pid: dict = {}
+    for r in attendance:
+        pid = r["player_id"]
+        due_by_pid[pid] = due_by_pid.get(pid, 0.0) + (r["fee_charged"] or 0)
+    for r in payments_all:
+        pid = r["player_id"]
+        due_by_pid[pid] = due_by_pid.get(pid, 0.0) - (r["amount"] or 0)
+    # Only sum positive balances — overpaid players don't cancel others' debts
+    total_due      = sum(v for v in due_by_pid.values() if v > 0.005)
 
     month_att      = [r for r in attendance if str(r["session_date"])[:7] == month_str]
     month_charged  = sum(r["fee_charged"] or 0 for r in month_att)
@@ -149,15 +159,7 @@ try:
     st.divider()
 
     # ── Section 4: Top dues ───────────────────────────────────────────────────
-    # Per-player outstanding = Σ fee_charged − Σ payments
-    due_by_pid: dict = {}
-    for r in attendance:
-        pid = r["player_id"]
-        due_by_pid[pid] = due_by_pid.get(pid, 0.0) + (r["fee_charged"] or 0)
-    for r in payments_all:
-        pid = r["player_id"]
-        due_by_pid[pid] = due_by_pid.get(pid, 0.0) - (r["amount"] or 0)
-
+    # Reuse due_by_pid computed above
     top_dues = sorted(
         [{"name": pid_to_name.get(pid, "Unknown"), "due": round(v, 2)}
          for pid, v in due_by_pid.items() if v > 0.5],
