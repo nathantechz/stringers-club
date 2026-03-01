@@ -246,6 +246,20 @@ div[data-baseweb="select"] [aria-label="Clear value"] {
 div[data-baseweb="select"] div[role="button"] > div {
     background-color: transparent !important;
 }
+/* Hide ghost box — target hidden clear button and arrow container */
+div[data-baseweb="select"] button {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+div[data-baseweb="select"] div[aria-hidden="true"] {
+    background-color: transparent !important;
+    border: none !important;
+}
+div[data-baseweb="select"] [data-testid="stSelectboxVirtualFocus"] + div {
+    background-color: transparent !important;
+    border: none !important;
+}
 /* 1. Force text container visible and left-aligned */
 div[data-baseweb="select"] div[role="button"] {
     text-align: left !important;
