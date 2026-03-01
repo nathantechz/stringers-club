@@ -210,7 +210,7 @@ input, textarea, select,
 [data-testid="stNumberInput"] input,
 [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
 [data-testid="stDateInput"] input {
-    background: #ecfdf5 !important;
+    background: var(--dropdown-bg) !important;
     border: 1.5px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
     color: var(--text) !important;
@@ -240,18 +240,16 @@ input, textarea, select,
 [data-baseweb="select"],
 [data-testid="stSelectbox"] [data-baseweb="select"],
 [data-testid="stMultiSelect"] [data-baseweb="select"] {
-    background: #ecfdf5 !important;
+    background: var(--dropdown-bg) !important;
     border-radius: var(--radius-sm) !important;
 }
 /* Inner control div */
 [data-baseweb="select"] > div,
 [data-testid="stSelectbox"] [data-baseweb="select"] > div,
 [data-testid="stMultiSelect"] [data-baseweb="select"] > div {
-    background: #ecfdf5 !important;
+    background: var(--dropdown-bg) !important;
     border: 1.5px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
-    color: #0f172a !important;
-    -webkit-text-fill-color: #0f172a !important;
 }
 /* Nuclear wildcard — forces dark text on every child element regardless of
    Streamlit's dynamically generated class names. Covers singleValue, placeholder,
