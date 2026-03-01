@@ -235,6 +235,17 @@ input, textarea, select,
 }
 
 /* ── Selectbox glitch fixes ── */
+/* Remove the ghost box that appears after selected text */
+div[data-baseweb="select"] [data-testid="stSelectboxVirtualFocus"] + div,
+div[data-baseweb="select"] [aria-label="Clear value"] {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+/* Ensure the text container inside the trigger has no background */
+div[data-baseweb="select"] div[role="button"] > div {
+    background-color: transparent !important;
+}
 /* 1. Force text container visible and left-aligned */
 div[data-baseweb="select"] div[role="button"] {
     text-align: left !important;
