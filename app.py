@@ -99,12 +99,15 @@ try:
     st.divider()
 
     # ── Section 3 (was forecast): Forecast ───────────────────────────────────
-    st.markdown(f"**🔮 Forecast — {today_dow}**")
+    from datetime import timedelta
+    tomorrow     = today + timedelta(days=1)
+    tomorrow_dow = tomorrow.strftime("%A")
+    st.markdown(f"**🔮 Tomorrow's Forecast — {tomorrow_dow}, {tomorrow.strftime('%d %b')}**")
     if attendance:
         adf = pd.DataFrame(attendance)
         adf["session_date"] = pd.to_datetime(adf["session_date"])
         adf["day_of_week"]  = adf["session_date"].dt.day_name()
-        hist = adf[(adf["day_of_week"] == today_dow) & (adf["session_date"].dt.date < today)]
+        hist = adf[(adf["day_of_week"] == tomorrow_dow) & (adf["session_date"].dt.date < tomorrow)]
 
         def _pred(slot):
             s = hist[hist["session_time"] == slot]
