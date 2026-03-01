@@ -25,8 +25,9 @@ def inject_mobile_css():
     --text:      #0f172a;
     --text-inv:  #f5f7ff;
     --muted:     #047857;
-    --dropdown-bg:   #ffffff;
+    --dropdown-bg:   #ecfdf5;
     --dropdown-text: #0f172a;
+    --select-bg:     #ecfdf5;
     --option-hover:  #dbeafe;
     --option-sel:    #bfdbfe;
     --radius:    16px;
@@ -209,7 +210,7 @@ input, textarea, select,
 [data-testid="stNumberInput"] input,
 [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
 [data-testid="stDateInput"] input {
-    background: var(--card) !important;
+    background: #ecfdf5 !important;
     border: 1.5px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
     color: var(--text) !important;
@@ -239,14 +240,14 @@ input, textarea, select,
 [data-baseweb="select"],
 [data-testid="stSelectbox"] [data-baseweb="select"],
 [data-testid="stMultiSelect"] [data-baseweb="select"] {
-    background: var(--card) !important;
+    background: #ecfdf5 !important;
     border-radius: var(--radius-sm) !important;
 }
 /* Inner control div */
 [data-baseweb="select"] > div,
 [data-testid="stSelectbox"] [data-baseweb="select"] > div,
 [data-testid="stMultiSelect"] [data-baseweb="select"] > div {
-    background: var(--card) !important;
+    background: #ecfdf5 !important;
     border: 1.5px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
     color: #0f172a !important;
