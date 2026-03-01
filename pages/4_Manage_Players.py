@@ -64,7 +64,18 @@ with st.expander("➕ Add new player", expanded=False):
                     st.success(f"✅ {name} added — Skill {skill_level}/10")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Error: {e}")
+                    if "date_joined" in str(e):
+                        # Column not yet migrated — save without it
+                        row.pop("date_joined")
+                        try:
+                            sb.table("players").insert(row).execute()
+                            st.success(f"✅ {name} added — Skill {skill_level}/10")
+                            st.warning("⚠️ Date joined not saved — run migration_v3.sql in Supabase to enable this field.")
+                            st.rerun()
+                        except Exception as e2:
+                            st.error(f"Error: {e2}")
+                    else:
+                        st.error(f"Error: {e}")
 
 st.divider()
 
@@ -140,7 +151,7 @@ with st.form("edit_player_form"):
     update_btn = st.form_submit_button("💾 Update Player")
 
     if update_btn:
-        sb.table("players").update({
+        update_data = {
             "name":            new_name.strip(),
             "phone":           new_phone.strip(),
             "membership_type": new_memtype,
@@ -150,6 +161,16 @@ with st.form("edit_player_form"):
             "work_timing":     new_work_timing,
             "date_joined":     str(new_date_joined),
             "is_active":       new_active,
-        }).eq("id", edit_player["id"]).execute()
+        }
+        try:
+            sb.table("players").update(update_data).eq("id", edit_player["id"]).execute()
+        except Exception as e:
+            if "date_joined" in str(e):
+                update_data.pop("date_joined")
+                sb.table("players").update(update_data).eq("id", edit_player["id"]).execute()
+                st.warning("⚠️ Date joined not saved — run migration_v3.sql in Supabase to enable this field.")
+            else:
+                st.error(f"Error: {e}")
+                st.stop()
         st.success(f"✅ {new_name} updated — Skill {new_skill}/10")
         st.rerun()
