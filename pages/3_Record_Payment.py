@@ -55,7 +55,8 @@ pay_all = (
 )
 total_charged  = sum(r["fee_charged"] or 0 for r in all_att)
 total_paid_all = sum(r["amount"]      or 0 for r in pay_all)
-total_due      = total_charged - total_paid_all
+# Clamp to 0 — negative means prepaid/monthly fee not yet distributed to sessions
+total_due      = max(0.0, round(total_charged - total_paid_all, 2))
 
 mem_color = "var(--accent3)" if is_monthly else "var(--accent2)"
 mem_label = "📅 Monthly member" if is_monthly else "🏸 Daily / Regular"

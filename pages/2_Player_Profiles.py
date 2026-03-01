@@ -55,7 +55,7 @@ att_rows = (
 pay_rows_all  = sb.table("payments").select("amount").eq("player_id", p_id).execute().data
 total_charged = sum(r["fee_charged"] or 0 for r in att_rows)
 total_paid_all = sum(r["amount"] or 0 for r in pay_rows_all)
-balance_due   = total_charged - total_paid_all
+balance_due   = max(0.0, round(total_charged - total_paid_all, 2))
 
 c1, c2 = st.columns(2)
 c1.metric("Sessions", len(att_rows))
