@@ -51,13 +51,14 @@ try:
     today_morning  = sum(1 for r in today_att if r["session_time"] == "morning")
     today_evening  = sum(1 for r in today_att if r["session_time"] == "evening")
 
-    # ── Section 1: 4 headline metrics ────────────────────────────────────────
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Active Players",      len(players))
-    c2.metric("Today's Players",     today_morning + today_evening,
+    # ── Section 1: 2×2 headline metrics ──────────────────────────────────────
+    c1, c2 = st.columns(2)
+    c1.metric("Active Players",  len(players))
+    c2.metric("Today's Players", today_morning + today_evening,
               f"☀️ {today_morning}  🌙 {today_evening}")
-    c3.metric("Month Collected",     f"₹{month_paid:,.0f}")
-    c4.metric("Outstanding Dues",    f"₹{total_due:,.0f}")
+    c3, c4 = st.columns(2)
+    c3.metric("Month Collected", f"₹{month_paid:,.0f}")
+    c4.metric("Outstanding Dues", f"₹{total_due:,.0f}")
 
     st.divider()
 
@@ -135,10 +136,11 @@ try:
 
     # ── Section 3: This month P&L snapshot ───────────────────────────────────
     st.markdown(f"**📆 {today.strftime('%B %Y')} — Financial Snapshot**")
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Fees Charged",    f"₹{month_charged:,.0f}")
-    m2.metric("Collected",       f"₹{month_paid:,.0f}")
-    m3.metric("Expenditure",     f"₹{month_exp:,.0f}")
+    m1, m2 = st.columns(2)
+    m1.metric("Fees Charged", f"₹{month_charged:,.0f}")
+    m2.metric("Collected",    f"₹{month_paid:,.0f}")
+    m3, m4 = st.columns(2)
+    m3.metric("Expenditure",  f"₹{month_exp:,.0f}")
     profit_delta = f"{'▲' if month_profit >= 0 else '▼'} ₹{abs(month_profit):,.0f}"
     m4.metric("Net Profit",      f"₹{month_profit:,.0f}",
               delta=profit_delta,
