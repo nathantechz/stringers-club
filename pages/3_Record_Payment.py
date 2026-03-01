@@ -131,6 +131,13 @@ with tab_pay:
             else:
                 st.subheader("Recent unpaid sessions")
 
+            qp_date = st.date_input(
+                "Payment date",
+                value=date.today(),
+                key="qp_pay_date",
+                help="Date the money was actually received",
+            )
+
             for r in sessions_to_show:
                 charged = r["fee_charged"] or 0
                 paid    = r["amount_paid"] or 0
@@ -167,7 +174,7 @@ with tab_pay:
                             pr = sb.table("payments").insert({
                                 "player_id":    p_id,
                                 "amount":       qp_amt,
-                                "payment_date": today_str,
+                                "payment_date": str(qp_date),
                                 "notes":        pay_method,
                             }).execute()
                             pay_id = pr.data[0]["id"]
@@ -503,14 +510,14 @@ with tab_history:
         pay_records = (
             sb.table("payments")
             .select("*")
-            .eq("player_id", ep_id)
+            .eq("player_id", p_id)
             .order("payment_date", desc=True)
             .execute()
             .data
         )
 
         if not pay_records:
-            st.info(f"No payment records found for {edit_player_name}.")
+            st.info(f"No payment records found for {player_name}.")
         else:
             pay_labels = [
                 f"{r['payment_date']}  ·  ₹{r['amount']:.2f}"
@@ -624,7 +631,7 @@ with tab_history:
             session_rows = (
                 sb.table("attendance")
                 .select("*")
-                .eq("player_id", ep_id)
+                .eq("player_id", p_id)
                 .gte("session_date", from_dt)
                 .lte("session_date", to_dt)
                 .order("session_date")
@@ -632,7 +639,7 @@ with tab_history:
                 .data
             )
             if not session_rows:
-                st.info(f"No sessions recorded for {edit_player_name} in {sel_month}.")
+                st.info(f"No sessions recorded for {player_name} in {sel_month}.")
                 st.stop()
 
             total_paid_m = sum(r["amount_paid"] or 0 for r in session_rows)
@@ -661,7 +668,7 @@ with tab_history:
             session_rows = (
                 sb.table("attendance")
                 .select("*")
-                .eq("player_id", ep_id)
+                .eq("player_id", p_id)
                 .gte("session_date", str(from_dt_d))
                 .lte("session_date", str(to_dt_d))
                 .order("session_date")
@@ -673,7 +680,7 @@ with tab_history:
                 st.stop()
 
         st.divider()
-        st.subheader(f"📋 {edit_player_name} — {len(session_rows)} session(s)")
+        st.subheader(f"📋 {player_name} — {len(session_rows)} session(s)")
 
         with st.form("edit_sessions_form"):
             new_vals = {}
