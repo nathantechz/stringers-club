@@ -13,23 +13,23 @@ def inject_mobile_css():
 
 /* ── Root palette ── */
 :root {
-    --bg:        #f5f7ff;
-    --surface:   #eef1fb;
-    --card:      #ffffff;
-    --border:    #c8cfe8;
-    --accent:    #059669;
-    --accent2:   #0284c7;
+    --bg:        #fffbf0;
+    --surface:   #fef3c7;
+    --card:      #fffdf8;
+    --border:    #fcd34d;
+    --accent:    #d97706;
+    --accent2:   #ea580c;
     --accent3:   #7c3aed;
-    --warn:      #d97706;
+    --warn:      #b45309;
     --danger:    #dc2626;
-    --text:      #0f172a;
-    --text-inv:  #f5f7ff;
-    --muted:     #047857;
-    --dropdown-bg:   #ecfdf5;
-    --dropdown-text: #0f172a;
-    --select-bg:     #ecfdf5;
-    --option-hover:  #dbeafe;
-    --option-sel:    #bfdbfe;
+    --text:      #292524;
+    --text-inv:  #fffbf0;
+    --muted:     #92400e;
+    --dropdown-bg:   #fef3c7;
+    --dropdown-text: #292524;
+    --select-bg:     #fef3c7;
+    --option-hover:  #fde68a;
+    --option-sel:    #fcd34d;
     --radius:    16px;
     --radius-sm: 10px;
 }
@@ -173,15 +173,15 @@ p, li { font-size: 0.92rem !important; color: var(--text) !important; }
 [data-testid="stFormSubmitButton"] button,
 [data-testid="stButton"] button {
     width: 100% !important;
-    background: linear-gradient(135deg, var(--accent), #10b981) !important;
-    color: #03140a !important;
+    background: linear-gradient(135deg, var(--accent), #b45309) !important;
+    color: #1c0a00 !important;
     border: none !important;
     border-radius: 50px !important;
     font-weight: 800 !important;
     font-size: 0.95rem !important;
     padding: 12px 20px !important;
     letter-spacing: 0.3px;
-    box-shadow: 0 4px 14px rgba(5,150,105,0.25);
+    box-shadow: 0 4px 14px rgba(217,119,6,0.30);
     transition: filter 0.15s, transform 0.1s;
 }
 [data-testid="stFormSubmitButton"] button:hover,
@@ -201,7 +201,7 @@ p, li { font-size: 0.92rem !important; color: var(--text) !important; }
 }
 /* Primary button accent */
 button[kind="primary"] {
-    background: linear-gradient(135deg, var(--accent), #047857) !important;
+    background: linear-gradient(135deg, var(--accent), #92400e) !important;
 }
 
 /* ── Inputs & selects ── */
@@ -222,17 +222,17 @@ input, textarea, select,
 [data-testid="stNumberInput"] *,
 [data-testid="stDateInput"] *,
 [data-testid="stTimeInput"] * {
-    color: #0f172a !important;
-    -webkit-text-fill-color: #0f172a !important;
+    color: #292524 !important;
+    -webkit-text-fill-color: #292524 !important;
 }
 [data-testid="stTextInput"] input:focus,
 [data-testid="stNumberInput"] input:focus {
     border-color: var(--accent2) !important;
-    box-shadow: 0 0 0 3px rgba(56,189,248,0.22) !important;
+    box-shadow: 0 0 0 3px rgba(234,88,12,0.22) !important;
 }
 [data-testid="stSelectbox"] [data-baseweb="select"] > div:focus-within {
     border-color: var(--accent2) !important;
-    box-shadow: 0 0 0 3px rgba(56,189,248,0.22) !important;
+    box-shadow: 0 0 0 3px rgba(234,88,12,0.22) !important;
 }
 
 /* ── Selectbox / multiselect — closed trigger ── */
@@ -258,8 +258,8 @@ input, textarea, select,
    sets it to a light/transparent value. */
 [data-testid="stSelectbox"] *,
 [data-testid="stMultiSelect"] * {
-    color: #0f172a !important;
-    -webkit-text-fill-color: #0f172a !important;
+    color: #292524 !important;
+    -webkit-text-fill-color: #292524 !important;
 }
 /* Keep the dropdown chevron icon in accent colour (override the wildcard above) */
 [data-testid="stSelectbox"] svg,
@@ -288,7 +288,7 @@ input, textarea, select,
 [role="option"],
 li[data-baseweb="option"] {
     background: var(--dropdown-bg) !important;
-    color: #0f172a !important;
+    color: #292524 !important;
     font-size: 0.92rem !important;
     font-weight: 600 !important;
     border: none !important;
@@ -299,33 +299,33 @@ li[data-baseweb="option"] {
 [data-baseweb="menu"] p,
 [role="listbox"] span,
 [role="option"] span {
-    color: #0f172a !important;
+    color: #292524 !important;
 }
 /* Option hover */
 li[data-baseweb="option"]:hover,
 [role="option"]:hover,
 [data-baseweb="option"]:hover {
     background: var(--option-hover) !important;
-    color: #0f172a !important;
+    color: #292524 !important;
     cursor: pointer;
 }
 /* Option selected/active */
 li[data-baseweb="option"][aria-selected="true"],
 [role="option"][aria-selected="true"] {
     background: var(--option-sel) !important;
-    color: #0f172a !important;
+    color: #292524 !important;
     font-weight: 800 !important;
 }
 /* Option focused via keyboard */
 li[data-baseweb="option"]:focus,
 [role="option"]:focus {
     background: var(--option-hover) !important;
-    color: #0f172a !important;
+    color: #292524 !important;
     outline: none !important;
 }
 /* Multiselect tag pill */
 [data-baseweb="tag"] {
-    background: rgba(56,189,248,0.18) !important;
+    background: rgba(234,88,12,0.15) !important;
     border: 1px solid var(--accent2) !important;
     border-radius: 50px !important;
     color: var(--accent2) !important;
@@ -337,7 +337,7 @@ li[data-baseweb="option"]:focus,
 [data-testid="stSlider"] [data-baseweb="slider"] [role="slider"] {
     background: var(--accent2) !important;
     border-color: var(--accent2) !important;
-    box-shadow: 0 0 0 3px rgba(56,189,248,0.25) !important;
+    box-shadow: 0 0 0 3px rgba(234,88,12,0.25) !important;
 }
 [data-testid="stSlider"] [data-baseweb="slider"] div[data-testid="stSliderThumbValue"] {
     color: var(--accent2) !important;
@@ -394,7 +394,7 @@ li[data-baseweb="option"]:focus,
     padding: 10px 12px !important;
     border-bottom: 1px solid var(--border) !important;
 }
-[data-testid="stDataFrame"] tr:hover td { background: rgba(2,132,199,0.06) !important; }
+[data-testid="stDataFrame"] tr:hover td { background: rgba(217,119,6,0.06) !important; }
 
 /* ── Alerts ── */
 [data-testid="stAlert"] {
@@ -406,7 +406,7 @@ li[data-baseweb="option"]:focus,
 [data-testid="stSuccessAlert"]  { border-left: 4px solid var(--accent)  !important; background: rgba(5,150,105,0.08)    !important; }
 [data-testid="stWarningAlert"]  { border-left: 4px solid var(--warn)    !important; background: rgba(217,119,6,0.08)    !important; }
 [data-testid="stErrorAlert"]    { border-left: 4px solid var(--danger)  !important; background: rgba(220,38,38,0.08)    !important; }
-[data-testid="stInfoAlert"]     { border-left: 4px solid var(--accent2) !important; background: rgba(2,132,199,0.08)    !important; }
+[data-testid="stInfoAlert"]     { border-left: 4px solid var(--accent2) !important; background: rgba(234,88,12,0.08)    !important; }
 
 /* ── Divider ── */
 hr { border: none !important; border-top: 1.5px solid var(--border) !important; margin: 16px 0 !important; background: linear-gradient(90deg, var(--accent2), var(--accent3)) !important; height: 1.5px !important; opacity: 0.5; }
@@ -505,9 +505,9 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
     font-size: 0.8rem;
     font-weight: 700;
     color: #ffffff;
-    background: linear-gradient(135deg, var(--accent), #047857);
+    background: linear-gradient(135deg, var(--accent), #92400e);
     margin-left: 8px;
-    box-shadow: 0 2px 8px rgba(5,150,105,0.25);
+    box-shadow: 0 2px 8px rgba(217,119,6,0.30);
 }
 
 /* ── Page title row ── */
@@ -534,7 +534,7 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
     text-decoration: none !important;
     min-height: 90px;
 }
-.nav-card:hover { border-color: var(--accent2) !important; background: rgba(2,132,199,0.06) !important; box-shadow: 0 4px 16px rgba(2,132,199,0.14) !important; }
+.nav-card:hover { border-color: var(--accent2) !important; background: rgba(234,88,12,0.06) !important; box-shadow: 0 4px 16px rgba(234,88,12,0.14) !important; }
 .nav-card .icon { font-size: 1.8rem; margin-bottom: 6px; }
 .nav-card .label { font-size: 0.78rem; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.4px; }
 
@@ -558,8 +558,8 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
 }
 [data-testid="stPageLink"] a:hover {
     border-color: var(--accent2) !important;
-    background: rgba(2,132,199,0.06) !important;
-    box-shadow: 0 4px 16px rgba(2,132,199,0.14) !important;
+    background: rgba(234,88,12,0.06) !important;
+    box-shadow: 0 4px 16px rgba(234,88,12,0.14) !important;
     color: var(--accent2) !important;
 }
 </style>
