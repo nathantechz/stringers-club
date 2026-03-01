@@ -204,25 +204,15 @@ button[kind="primary"] {
     background: linear-gradient(135deg, var(--accent), #92400e) !important;
 }
 
-/* ── Inputs & selects ── */
-input, textarea, select,
+/* ── Inputs ── */
 [data-testid="stTextInput"] input,
 [data-testid="stNumberInput"] input,
-[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
-[data-testid="stDateInput"] input {
-    background: var(--dropdown-bg) !important;
+[data-testid="stDateInput"] input,
+textarea {
     border: 1.5px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
-    color: var(--text) !important;
     font-size: 0.92rem !important;
     padding: 10px 12px !important;
-}
-/* Wildcard text colour for all input widget internals — include webkit fill */
-[data-testid="stTextInput"] *,
-[data-testid="stNumberInput"] *,
-[data-testid="stDateInput"] *,
-[data-testid="stTimeInput"] * {
-    color: var(--text) !important;
 }
 [data-testid="stTextInput"] input:focus,
 [data-testid="stNumberInput"] input:focus {
@@ -235,70 +225,33 @@ input, textarea, select,
 }
 
 /* ── Selectbox glitch fixes ── */
-/* Remove the ghost box that appears after selected text */
-div[data-baseweb="select"] [data-testid="stSelectboxVirtualFocus"] + div,
-div[data-baseweb="select"] [aria-label="Clear value"] {
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-/* Ensure the text container inside the trigger has no background */
-div[data-baseweb="select"] div[role="button"] > div {
-    background-color: transparent !important;
-}
-/* Hide ghost box — target hidden clear button and arrow container */
-div[data-baseweb="select"] button {
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-div[data-baseweb="select"] div[aria-hidden="true"] {
-    background-color: transparent !important;
-    border: none !important;
-}
-div[data-baseweb="select"] [data-testid="stSelectboxVirtualFocus"] + div {
-    background-color: transparent !important;
-    border: none !important;
-}
-/* 1. Force text container visible and left-aligned */
-div[data-baseweb="select"] div[role="button"] {
-    text-align: left !important;
-    padding-left: 10px !important;
-}
-/* 2. Ensure text isn't hidden by overflow rules */
-div[data-baseweb="select"] * {
-    overflow: visible !important;
-    text-overflow: clip !important;
-}
-/* 3. Fix the 'two lines' glitch — reset flexbox alignment on trigger */
-.stSelectbox div[data-baseweb="select"] > div:first-child {
-    display: flex !important;
-    align-items: center !important;
-}
-
-/* ── Selectbox / multiselect — container styling only (colours handled by config.toml) ── */
-[data-baseweb="select"],
-[data-testid="stSelectbox"] [data-baseweb="select"],
-[data-testid="stMultiSelect"] [data-baseweb="select"] {
-    border-radius: var(--radius-sm) !important;
-}
-[data-baseweb="select"] > div,
-[data-testid="stSelectbox"] [data-baseweb="select"] > div,
-[data-testid="stMultiSelect"] [data-baseweb="select"] > div {
+/* Only style the outer trigger border/radius — config.toml owns the colours */
+[data-testid="stSelectbox"] [data-baseweb="select"] > div {
     border: 1.5px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
 }
-/* Focus ring */
 [data-testid="stSelectbox"] [data-baseweb="select"] > div:focus-within,
 [data-testid="stMultiSelect"] [data-baseweb="select"] > div:focus-within {
     border-color: var(--accent2) !important;
     box-shadow: 0 0 0 3px rgba(234,88,12,0.22) !important;
 }
-/* Arrow icon colour */
+/* Arrow icon */
 [data-testid="stSelectbox"] svg,
-[data-testid="stMultiSelect"] svg,
-[data-baseweb="select"] svg {
+[data-testid="stMultiSelect"] svg {
     fill: var(--accent2) !important;
+}
+/* Fix text layout inside trigger */
+div[data-baseweb="select"] div[role="button"] {
+    text-align: left !important;
+    padding-left: 10px !important;
+}
+.stSelectbox div[data-baseweb="select"] > div:first-child {
+    display: flex !important;
+    align-items: center !important;
+}
+/* Hide the virtual focus indicator that renders as a ghost box */
+[data-testid="stSelectboxVirtualFocus"] {
+    display: none !important;
 }
 
 /* ── Dropdown popover / menu panel ── */
