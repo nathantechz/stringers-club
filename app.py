@@ -29,7 +29,7 @@ try:
     to_month   = f"{month_str}-{calendar.monthrange(today.year, today.month)[1]:02d}"
 
     # ── Single batch fetch ────────────────────────────────────────────────────
-    players      = sb.table("players").select("id, name").eq("is_active", True).execute().data
+    players      = sb.table("players").select("id, name, date_joined").eq("is_active", True).execute().data
     attendance   = sb.table("attendance").select("fee_charged, player_id, session_date, session_time").execute().data
     payments_all = sb.table("payments").select("player_id, amount, payment_date, notes").order("payment_date", desc=True).execute().data
     exp_month    = sb.table("expenditures").select("amount").gte("exp_date", from_month).lte("exp_date", to_month).execute().data
@@ -193,7 +193,51 @@ try:
 
     st.divider()
 
-    # ── Section 5: Recent payments ────────────────────────────────────────────
+    # ── Section 5: Upcoming anniversaries ────────────────────────────────────
+    upcoming_anns = []
+    for p in players:
+        dj = p.get("date_joined")
+        if not dj:
+            continue
+        joined = date.fromisoformat(str(dj)[:10])
+        try:
+            ann = joined.replace(year=today.year)
+        except ValueError:          # Feb 29 on non-leap year
+            ann = joined.replace(year=today.year, day=28)
+        if ann < today:
+            try:
+                ann = joined.replace(year=today.year + 1)
+            except ValueError:
+                ann = joined.replace(year=today.year + 1, day=28)
+        days_away = (ann - today).days
+        if days_away <= 30:
+            years_completed = ann.year - joined.year
+            upcoming_anns.append({
+                "name":  p["name"],
+                "date":  ann.strftime("%d %b"),
+                "days":  days_away,
+                "years": years_completed,
+            })
+    upcoming_anns.sort(key=lambda x: x["days"])
+
+    if upcoming_anns:
+        st.markdown(f"**🎂 Upcoming Club Anniversaries**")
+        for a in upcoming_anns:
+            label   = "Today! 🎉" if a["days"] == 0 else ("Tomorrow" if a["days"] == 1 else f"In {a['days']} days")
+            yrs_txt = f"{a['years']} year{'s' if a['years'] != 1 else ''}"
+            st.markdown(
+                f"<div style='display:flex;justify-content:space-between;"
+                f"align-items:center;padding:8px 16px;border-radius:8px;"
+                f"background:rgba(217,119,6,0.08);margin-bottom:6px;'>"
+                f"<span style='font-size:0.9rem;'>"
+                f"<span style='font-weight:500;'>{a['name']}</span>"
+                f"<br><span style='color:#92400e;font-size:0.78rem;'>{a['date']} · {yrs_txt} with the club</span></span>"
+                f"<span style='color:#d97706;font-weight:700;font-size:0.9rem;'>{label}</span>"
+                f"</div>",
+                unsafe_allow_html=True)
+        st.divider()
+
+    # ── Section 6: Recent payments ────────────────────────────────────────────
     st.markdown("**💚 Recent Payments**")
     if not payments_all:
         st.caption("No payments recorded yet.")

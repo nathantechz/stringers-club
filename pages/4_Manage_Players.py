@@ -5,6 +5,7 @@ Add / edit players: membership, skill level (1-10), profession, work timing.
 
 import streamlit as st
 import pandas as pd
+from datetime import date
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -24,8 +25,9 @@ sb = get_client()
 with st.expander("➕ Add new player", expanded=False):
     with st.form("add_player_form", clear_on_submit=True):
         st.markdown("**Personal details**")
-        name  = st.text_input("Full name *")
-        phone = st.text_input("WhatsApp no. (with country code, e.g. 918220583450) *")
+        name        = st.text_input("Full name *")
+        phone       = st.text_input("WhatsApp no. (with country code, e.g. 918220583450) *")
+        date_joined = st.date_input("Date joined the club", value=date.today())
 
         st.markdown("**Membership**")
         membership_type = st.selectbox("Membership type", ["regular", "monthly"])
@@ -54,6 +56,7 @@ with st.expander("➕ Add new player", expanded=False):
                     "skill_level":     skill_level,
                     "profession":      profession.strip() or None,
                     "work_timing":     work_timing,
+                    "date_joined":     str(date_joined),
                     "is_active":       True,
                 }
                 try:
@@ -77,6 +80,7 @@ st.subheader("All players")
 df = pd.DataFrame([
     {
         "Name":        p["name"],
+        "Joined":      p.get("date_joined") or "—",
         "Skill":       f"{p.get('skill_level') or '—'}/10",
         "Membership":  p["membership_type"].title(),
         "Profession":  p.get("profession") or "—",
@@ -110,6 +114,9 @@ with st.form("edit_player_form"):
     st.markdown("**Personal details**")
     new_name  = st.text_input("Name",  value=edit_player["name"])
     new_phone = st.text_input("Phone", value=edit_player["phone"])
+    _dj_raw       = edit_player.get("date_joined")
+    _dj_default   = date.fromisoformat(str(_dj_raw)[:10]) if _dj_raw else date.today()
+    new_date_joined = st.date_input("Date joined the club", value=_dj_default)
 
     st.markdown("**Membership**")
     new_memtype = st.selectbox(
@@ -141,6 +148,7 @@ with st.form("edit_player_form"):
             "skill_level":     new_skill,
             "profession":      new_profession.strip() or None,
             "work_timing":     new_work_timing,
+            "date_joined":     str(new_date_joined),
             "is_active":       new_active,
         }).eq("id", edit_player["id"]).execute()
         st.success(f"✅ {new_name} updated — Skill {new_skill}/10")

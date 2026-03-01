@@ -41,7 +41,27 @@ profession  = player.get("profession") or "—"
 work_timing = player.get("work_timing") or "—"
 col_b.markdown(f"**Profession:** {profession}")
 col_b.markdown(f"**Work timing:** {work_timing}")
-
+# Date joined + years as member
+_dj = player.get("date_joined")
+if _dj:
+    joined = date.fromisoformat(str(_dj)[:10])
+    today  = date.today()
+    years  = (today - joined).days // 365
+    months = ((today - joined).days % 365) // 30
+    duration = f"{years} yr{'s' if years != 1 else ''} {months} mo" if years else f"{months} month{'s' if months != 1 else ''}"
+    # Anniversary this year
+    ann_this_year = joined.replace(year=today.year)
+    if ann_this_year < today:
+        ann_this_year = joined.replace(year=today.year + 1)
+    days_to_ann = (ann_this_year - today).days
+    ann_str = f" · 🎂 Anniversary in {days_to_ann}d" if days_to_ann <= 30 else ""
+    st.markdown(
+        f"<div style='margin-top:6px;padding:6px 12px;border-radius:8px;"
+        f"background:rgba(217,119,6,0.08);font-size:0.87rem;'>"
+        f"📅 Joined <b>{joined.strftime('%d %b %Y')}</b> &nbsp;·&nbsp; "
+        f"Member for <b>{duration}</b>{ann_str}</div>",
+        unsafe_allow_html=True,
+    )
 # ── Summary metrics ───────────────────────────────────────────────────────────
 att_rows = (
     sb.table("attendance")
