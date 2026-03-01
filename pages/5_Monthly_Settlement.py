@@ -70,6 +70,20 @@ existing_configs = (
 )
 config_by_pid = {r["player_id"]: r["monthly_fee"] for r in existing_configs}
 
+# Auto-create configs for any players not yet configured this month
+# (uses their default monthly_fee from the players table)
+missing = [p for p in monthly_players if p["id"] not in config_by_pid]
+if missing:
+    new_rows = [
+        {"player_id": p["id"], "month": selected_month, "monthly_fee": p.get("monthly_fee") or 0.0}
+        for p in missing
+        if (p.get("monthly_fee") or 0.0) > 0
+    ]
+    if new_rows:
+        sb.table("monthly_fee_config").insert(new_rows).execute()
+        for r in new_rows:
+            config_by_pid[r["player_id"]] = r["monthly_fee"]
+
 with st.form("set_monthly_dues_form"):
     fee_inputs = {}
     for p in monthly_players:

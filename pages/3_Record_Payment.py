@@ -244,18 +244,31 @@ with tab_pay:
         month_sessions = len(month_att)
         month_paid     = sum(r["amount"] or 0 for r in month_pays)
 
-        mm1, mm2, mm3 = st.columns(3)
+        mm1, mm2 = st.columns(2)
         mm1.metric("Sessions this month", month_sessions)
-        mm2.metric("Already paid",        f"₹{month_paid:.0f}")
-        mm3.metric("Monthly fee",         f"₹{default_fee:.0f}")
+        mm2.metric("Already paid this month", f"₹{month_paid:.0f}")
         st.write("")
 
         with st.form("lump_sum_form"):
+            # Editable monthly fee for this month — saved to monthly_fee_config on submit
+            st.markdown("**Monthly fee for this month (₹)**")
+            month_fee_input = st.number_input(
+                "Monthly fee (₹)",
+                min_value=0.0,
+                step=100.0,
+                value=float(default_fee),
+                help="Pre-filled from this player's default fee. Edit to override for this month only.",
+                label_visibility="collapsed",
+            )
+            remaining = max(0.0, round(month_fee_input - month_paid, 2))
+            st.caption(f"Already paid: ₹{month_paid:.0f}  ·  Remaining due: **₹{remaining:.0f}**")
+            st.write("")
+
             lump_amount = st.number_input(
                 "Amount received (₹)",
                 min_value=0.0,
                 step=100.0,
-                value=float(max(0.0, default_fee - month_paid)),
+                value=float(remaining),
             )
             ls1, ls2    = st.columns(2)
             lump_date   = ls1.date_input("Payment date", value=date.today())
@@ -272,6 +285,13 @@ with tab_pay:
                 if lump_amount <= 0:
                     st.error("Amount must be > ₹0.")
                 else:
+                    # Always upsert monthly_fee_config with the (possibly edited) fee
+                    cfg_row = {"player_id": p_id, "month": sel_month, "monthly_fee": month_fee_input}
+                    if fee_conf:
+                        sb.table("monthly_fee_config").update(cfg_row).eq("player_id", p_id).eq("month", sel_month).execute()
+                    else:
+                        sb.table("monthly_fee_config").insert(cfg_row).execute()
+
                     note_parts = [f"{sel_month} monthly", lump_method]
                     if lump_notes:
                         note_parts.append(lump_notes)
@@ -308,6 +328,9 @@ with tab_pay:
                         )
                     else:
                         st.success(f"✅ ₹{lump_amount:.2f} recorded for {sel_month}.")
+                        new_total = round(month_paid + lump_amount, 2)
+                        if new_total >= month_fee_input:
+                            st.success(f"🎉 {player_name} is fully paid for {sel_month}!")
                     st.rerun()
 
     # ──────────────────────────────────────────────────────────────────────────
