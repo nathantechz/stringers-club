@@ -53,7 +53,7 @@ try:
                 return 0, "—"
             counts = s.groupby("session_date")["player_id"].nunique().tail(8)
             avg    = counts.mean()
-            return max(1, math.ceil(avg)), f"{max(1,math.floor(avg))}–{math.ceil(avg + counts.std() if len(counts)>1 else avg)}"
+            return max(1, math.ceil(avg)), f"{max(1,math.floor(avg))}–{math.ceil((avg + counts.std()) if len(counts)>1 else avg)}"
 
         m_pred, m_range = _pred("morning")
         e_pred, e_range = _pred("evening")

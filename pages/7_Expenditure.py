@@ -26,12 +26,12 @@ sb = get_client()
 
 CATEGORIES = ["Court booking", "Shuttles", "Equipment", "Other"]
 
-CHART_BG   = "#1a1d27"
-ACCENT     = "#4ade80"
-WARN       = "#fbbf24"
-DANGER     = "#f87171"
-GRID_COLOR = "#2e3352"
-TEXT_COLOR = "#8b92b3"
+CHART_BG   = "#ffffff"
+ACCENT     = "#059669"
+WARN       = "#d97706"
+DANGER     = "#dc2626"
+GRID_COLOR = "#e2e8f0"
+TEXT_COLOR = "#475569"
 
 def _style(fig):
     fig.update_layout(

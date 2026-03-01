@@ -98,31 +98,28 @@ with st.form("set_monthly_dues_form"):
 
 # Summary table
 st.markdown("**Current dues for this month:**")
+# Fetch all attendance for this month in one query, then aggregate per player
+all_att_month = (
+    sb.table("attendance")
+    .select("player_id, fee_charged, amount_paid")
+    .gte("session_date", from_date)
+    .lte("session_date", to_date)
+    .execute()
+    .data
+)
+att_count_by_pid = {}
+att_paid_by_pid  = {}
+for r in all_att_month:
+    pid = r["player_id"]
+    att_count_by_pid[pid] = att_count_by_pid.get(pid, 0) + 1
+    att_paid_by_pid[pid]  = att_paid_by_pid.get(pid, 0) + (r["amount_paid"] or 0)
+
 summary_rows = []
 for p in monthly_players:
     pid           = p["id"]
     monthly_fee   = config_by_pid.get(pid, p.get("monthly_fee") or 0.0)
-    # How many sessions attended this month
-    att_count = (
-        sb.table("attendance")
-        .select("id", count="exact")
-        .eq("player_id", pid)
-        .gte("session_date", from_date)
-        .lte("session_date", to_date)
-        .execute()
-        .count
-    ) or 0
-    # How much already paid (amount_paid sum across this month's rows)
-    att_rows_p = (
-        sb.table("attendance")
-        .select("fee_charged, amount_paid")
-        .eq("player_id", pid)
-        .gte("session_date", from_date)
-        .lte("session_date", to_date)
-        .execute()
-        .data
-    )
-    paid = sum(r["amount_paid"] or 0 for r in att_rows_p)
+    att_count     = att_count_by_pid.get(pid, 0)
+    paid          = att_paid_by_pid.get(pid, 0.0)
     summary_rows.append({
         "Player":          p["name"],
         "Monthly Fee (₹)": monthly_fee,

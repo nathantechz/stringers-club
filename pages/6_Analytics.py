@@ -38,11 +38,12 @@ df["week_start"]   = df["session_date"].dt.to_period("W").apply(lambda p: p.star
 df["month"]        = df["session_date"].dt.to_period("M").astype(str)
 df["day_of_week"]  = df["session_date"].dt.day_name()
 
-CHART_BG   = "#1a1d27"
-ACCENT     = "#4ade80"
-ACCENT2    = "#22d3ee"
-GRID_COLOR = "#2e3352"
-TEXT_COLOR = "#8b92b3"
+CHART_BG   = "#ffffff"
+ACCENT     = "#059669"
+ACCENT2    = "#0284c7"
+DANGER     = "#dc2626"
+GRID_COLOR = "#e2e8f0"
+TEXT_COLOR = "#475569"
 
 def _style(fig):
     fig.update_layout(
@@ -127,7 +128,7 @@ with tab_week:
         fig2 = px.bar(
             dow_counts, x="Day", y="Total Sessions",
             color="Total Sessions",
-            color_continuous_scale=["#1a1d27", ACCENT],
+            color_continuous_scale=["#dbeafe", ACCENT],
             title="Which days have most attendance?",
         )
         fig2.update_coloraxes(showscale=False)
@@ -189,7 +190,7 @@ with tab_players:
             player_freq, x="sessions", y="player_name",
             orientation="h",
             color="sessions",
-            color_continuous_scale=["#1a1d27", ACCENT],
+            color_continuous_scale=["#dbeafe", ACCENT],
             labels={"sessions": "Sessions attended", "player_name": "Player"},
             title="Attendance frequency by player",
         )

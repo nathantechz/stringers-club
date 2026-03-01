@@ -209,12 +209,6 @@ with tab_edit:
                     .execute()
                     .data
                 )
-                linked_map = {a["id"] if "id" in a else linked_ids[i]: a for i, a in enumerate(linked_att)}
-                lrows = []
-                for lnk in linked_junc:
-                    att_info = next(
-                        (a for a in linked_att if True), None  # we'll just zip
-                    )
                 lrows = [
                     {
                         "Session date": la.get("session_date", "—"),

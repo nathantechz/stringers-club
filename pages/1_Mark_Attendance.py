@@ -46,18 +46,25 @@ already_marked_ids = {r["player_id"] for r in existing}
 # ── Player search & attendance form ──────────────────────────────────────────
 st.subheader(f"Add player — {session_date.strftime('%A, %d %b %Y')} · {session_time}")
 
-with st.form("mark_attendance_form", clear_on_submit=True):
-    player_name = st.selectbox(
-        "Search player",
-        options=["— Select —"] + list(players.keys()),
-    )
+# Player selector lives outside the form so membership type can adapt the UI
+player_name = st.selectbox(
+    "Search player",
+    options=["— Select —"] + list(players.keys()),
+)
+_sel = players.get(player_name)
+_is_monthly_sel = _sel["membership_type"] == "monthly" if _sel else False
 
-    fee = st.number_input(
-        "Fee for this session (₹) — Leave 0 for Monthly Members",
-        min_value=0.0,
-        step=10.0,
-        value=0.0,
-    )
+with st.form("mark_attendance_form", clear_on_submit=True):
+    if _is_monthly_sel:
+        st.info("🏷️ Monthly member — fee will be settled at month-end. No per-session charge.")
+        fee = 0.0
+    else:
+        fee = st.number_input(
+            "Fee for this session (₹)",
+            min_value=0.0,
+            step=10.0,
+            value=0.0,
+        )
     notes = st.text_input("Notes (optional)")
     submitted = st.form_submit_button("✅ Mark Attendance")
 
