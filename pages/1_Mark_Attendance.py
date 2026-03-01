@@ -99,17 +99,40 @@ st.divider()
 st.subheader(f"Already marked for this session ({len(already_marked_ids)} players)")
 
 if existing:
+    # Fetch full attendance rows (need the id to delete)
+    existing_full = (
+        sb.table("attendance")
+        .select("id, player_id, fee_charged, amount_paid")
+        .eq("session_date", str(session_date))
+        .eq("session_time", session_key)
+        .execute()
+        .data
+    )
     pid_to_name = {p["id"]: p["name"] for p in players_raw}
-    rows = []
-    for r in existing:
-        pname = pid_to_name.get(r["player_id"], r["player_id"])
-        due   = (r["fee_charged"] or 0) - (r["amount_paid"] or 0)
-        rows.append({
-            "Player":      pname,
-            "Fee (₹)":     r["fee_charged"],
-            "Paid (₹)":    r["amount_paid"],
-            "Due (₹)":     due,
-        })
-    st.dataframe(rows, use_container_width=True)
+    for r in existing_full:
+        pname   = pid_to_name.get(r["player_id"], "Unknown")
+        fee_c   = r["fee_charged"] or 0
+        paid    = r["amount_paid"] or 0
+        due     = round(fee_c - paid, 2)
+        status  = "✅ Cleared" if due <= 0 else f"⚠️ Due ₹{due:.0f}"
+
+        with st.container(border=True):
+            ca, cb = st.columns([4, 1])
+            ca.markdown(f"**{pname}**")
+            ca.caption(f"Fee ₹{fee_c:.0f}  ·  Paid ₹{paid:.0f}  ·  {status}")
+            if cb.button("🗑️", key=f"del_att_{r['id']}", help="Remove this attendance record"):
+                # Reverse amount_paid via linked payments before deleting
+                linked = sb.table("payment_attendance") \
+                    .select("payment_id, applied_amount") \
+                    .eq("attendance_id", r["id"]).execute().data
+                for lnk in linked:
+                    pay = sb.table("payments").select("amount").eq("id", lnk["payment_id"]).execute().data
+                    if pay:
+                        new_amt = max(0.0, round((pay[0]["amount"] or 0) - (lnk["applied_amount"] or 0), 2))
+                        sb.table("payments").update({"amount": new_amt}).eq("id", lnk["payment_id"]).execute()
+                    sb.table("payment_attendance").delete().eq("attendance_id", r["id"]).execute()
+                sb.table("attendance").delete().eq("id", r["id"]).execute()
+                st.success(f"🗑️ {pname} removed from this session.")
+                st.rerun()
 else:
     st.info("No players marked yet for this session.")
