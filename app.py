@@ -61,64 +61,75 @@ try:
 
     st.divider()
 
-    # ── Section 2: Today live + forecast side by side ─────────────────────────
-    col_today, col_fc = st.columns(2)
+    # ── Section 2: Today live ─────────────────────────────────────────────────
+    st.markdown(f"**📅 Today's Sessions — {today.strftime('%A, %d %b %Y')}**")
+    def _session_line(label, count):
+        if count:
+            st.markdown(
+                f"<div style='display:flex;justify-content:space-between;"
+                f"align-items:center;padding:8px 16px;border-radius:8px;"
+                f"background:rgba(5,150,105,0.08);margin-bottom:6px;'>"
+                f"<span style='font-size:0.9rem;font-weight:500;'>{label}</span>"
+                f"<span style='font-weight:700;color:#059669;'>{count} player{'s' if count!=1 else ''}</span>"
+                f"</div>",
+                unsafe_allow_html=True)
+        else:
+            st.markdown(
+                f"<div style='display:flex;justify-content:space-between;"
+                f"align-items:center;padding:8px 16px;border-radius:8px;"
+                f"background:rgba(100,116,139,0.07);margin-bottom:6px;'>"
+                f"<span style='font-size:0.9rem;font-weight:500;'>{label}</span>"
+                f"<span style='color:#94a3b8;'>not marked yet</span>"
+                f"</div>",
+                unsafe_allow_html=True)
+    _session_line("☀️ Morning (7–8 AM)", today_morning)
+    _session_line("🌙 Evening (7–8 PM)", today_evening)
 
-    with col_today:
-        st.markdown(f"**📅 Today's Sessions**")
-        def _session_line(label, count):
-            if count:
+    st.divider()
+
+    # ── Section 3 (was forecast): Forecast ───────────────────────────────────
+    st.markdown(f"**🔮 Forecast — {today_dow}**")
+    if attendance:
+        adf = pd.DataFrame(attendance)
+        adf["session_date"] = pd.to_datetime(adf["session_date"])
+        adf["day_of_week"]  = adf["session_date"].dt.day_name()
+        hist = adf[(adf["day_of_week"] == today_dow) & (adf["session_date"].dt.date < today)]
+
+        def _pred(slot):
+            s = hist[hist["session_time"] == slot]
+            if s.empty:
+                return None, None
+            counts = s.groupby("session_date")["player_id"].nunique().tail(8)
+            avg = counts.mean()
+            hi  = math.ceil((avg + counts.std()) if len(counts) > 1 else avg)
+            return max(1, math.ceil(avg)), f"{max(1, math.floor(avg))}–{hi}"
+
+        m_pred, m_rng = _pred("morning")
+        e_pred, e_rng = _pred("evening")
+
+        def _fc_line(label, pred, rng):
+            if pred:
                 st.markdown(
-                    f"<div style='padding:6px 10px;border-radius:8px;"
-                    f"background:rgba(5,150,105,0.08);margin-bottom:6px;'>"
-                    f"{label} &nbsp;<b>{count} player{'s' if count!=1 else ''}</b></div>",
+                    f"<div style='display:flex;justify-content:space-between;"
+                    f"align-items:center;padding:8px 16px;border-radius:8px;"
+                    f"background:rgba(217,119,6,0.08);margin-bottom:6px;'>"
+                    f"<span style='font-size:0.9rem;font-weight:500;'>{label}</span>"
+                    f"<span style='font-weight:700;color:#92400e;'>~{pred} players "
+                    f"<span style='font-size:0.8rem;font-weight:400;'>(range {rng})</span></span>"
+                    f"</div>",
                     unsafe_allow_html=True)
             else:
                 st.markdown(
-                    f"<div style='padding:6px 10px;border-radius:8px;"
-                    f"background:rgba(100,116,139,0.07);margin-bottom:6px;color:#94a3b8;'>"
-                    f"{label} &nbsp;not marked yet</div>",
+                    f"<div style='display:flex;justify-content:space-between;"
+                    f"align-items:center;padding:8px 16px;border-radius:8px;"
+                    f"background:rgba(100,116,139,0.07);margin-bottom:6px;'>"
+                    f"<span style='font-size:0.9rem;font-weight:500;'>{label}</span>"
+                    f"<span style='color:#94a3b8;'>no history yet</span>"
+                    f"</div>",
                     unsafe_allow_html=True)
-        _session_line("☀️ Morning (7–8 AM)", today_morning)
-        _session_line("🌙 Evening (7–8 PM)", today_evening)
-
-    with col_fc:
-        st.markdown(f"**🔮 Forecast — {today_dow}**")
-        if attendance:
-            adf = pd.DataFrame(attendance)
-            adf["session_date"] = pd.to_datetime(adf["session_date"])
-            adf["day_of_week"]  = adf["session_date"].dt.day_name()
-            hist = adf[(adf["day_of_week"] == today_dow) & (adf["session_date"].dt.date < today)]
-
-            def _pred(slot):
-                s = hist[hist["session_time"] == slot]
-                if s.empty:
-                    return None, None
-                counts = s.groupby("session_date")["player_id"].nunique().tail(8)
-                avg = counts.mean()
-                hi  = math.ceil((avg + counts.std()) if len(counts) > 1 else avg)
-                return max(1, math.ceil(avg)), f"{max(1, math.floor(avg))}–{hi}"
-
-            m_pred, m_rng = _pred("morning")
-            e_pred, e_rng = _pred("evening")
-
-            def _fc_line(label, pred, rng):
-                if pred:
-                    st.markdown(
-                        f"<div style='padding:6px 10px;border-radius:8px;"
-                        f"background:rgba(217,119,6,0.08);margin-bottom:6px;'>"
-                        f"{label} &nbsp;<b>~{pred}</b> &nbsp;"
-                        f"<span style='color:#92400e;font-size:0.8rem;'>(range {rng})</span></div>",
-                        unsafe_allow_html=True)
-                else:
-                    st.markdown(
-                        f"<div style='padding:6px 10px;border-radius:8px;"
-                        f"background:rgba(100,116,139,0.07);margin-bottom:6px;color:#94a3b8;'>"
-                        f"{label} &nbsp;no history</div>",
-                        unsafe_allow_html=True)
-            _fc_line("☀️ Morning", m_pred, m_rng)
-            _fc_line("🌙 Evening", e_pred, e_rng)
-            st.caption("Based on last 8 same-weekday sessions")
+        _fc_line("☀️ Morning (7–8 AM)", m_pred, m_rng)
+        _fc_line("🌙 Evening (7–8 PM)", e_pred, e_rng)
+        st.caption("Based on last 8 same-weekday sessions")
 
     st.divider()
 
@@ -135,9 +146,7 @@ try:
 
     st.divider()
 
-    # ── Section 4: Top dues + Recent payments ────────────────────────────────
-    col_dues, col_pay = st.columns(2)
-
+    # ── Section 4: Top dues ───────────────────────────────────────────────────
     # Per-player outstanding = Σ fee_charged − Σ payments
     due_by_pid: dict = {}
     for r in attendance:
@@ -153,41 +162,44 @@ try:
         key=lambda x: x["due"], reverse=True
     )[:5]
 
-    with col_dues:
-        st.markdown("**🔴 Top Outstanding Dues**")
-        if not top_dues:
-            st.success("✅ All clear!")
-        else:
-            for row in top_dues:
-                st.markdown(
-                    f"<div style='display:flex;justify-content:space-between;"
-                    f"align-items:center;padding:5px 10px;border-radius:8px;"
-                    f"background:rgba(220,38,38,0.06);margin-bottom:5px;'>"
-                    f"<span style='font-size:0.87rem;'>{row['name']}</span>"
-                    f"<span style='color:#dc2626;font-weight:700;'>₹{row['due']:,.0f}</span>"
-                    f"</div>",
-                    unsafe_allow_html=True)
+    st.markdown("**🔴 Top Outstanding Dues**")
+    if not top_dues:
+        st.success("✅ All players are clear — no outstanding dues!")
+    else:
+        for row in top_dues:
+            st.markdown(
+                f"<div style='display:flex;justify-content:space-between;"
+                f"align-items:center;padding:8px 16px;border-radius:8px;"
+                f"background:rgba(220,38,38,0.06);margin-bottom:6px;'>"
+                f"<span style='font-size:0.9rem;font-weight:500;'>{row['name']}</span>"
+                f"<span style='color:#dc2626;font-weight:700;font-size:0.95rem;'>"
+                f"₹{row['due']:,.0f}</span>"
+                f"</div>",
+                unsafe_allow_html=True)
 
-    with col_pay:
-        st.markdown("**💚 Recent Payments**")
-        if not payments_all:
-            st.caption("No payments recorded yet.")
-        else:
-            for r in payments_all[:5]:
-                name      = pid_to_name.get(r["player_id"], "Unknown")
-                notes_txt = r["notes"] or ""
-                # show only method part (first token before " — ")
-                method    = notes_txt.split(" — ")[0] if notes_txt else ""
-                sub       = f"{r['payment_date']}" + (f" · {method}" if method else "")
-                st.markdown(
-                    f"<div style='display:flex;justify-content:space-between;"
-                    f"align-items:center;padding:5px 10px;border-radius:8px;"
-                    f"background:rgba(5,150,105,0.06);margin-bottom:5px;'>"
-                    f"<span style='font-size:0.87rem;'>{name}<br>"
-                    f"<span style='color:#64748b;font-size:0.75rem;'>{sub}</span></span>"
-                    f"<span style='color:#059669;font-weight:700;'>₹{r['amount']:,.0f}</span>"
-                    f"</div>",
-                    unsafe_allow_html=True)
+    st.divider()
+
+    # ── Section 5: Recent payments ────────────────────────────────────────────
+    st.markdown("**💚 Recent Payments**")
+    if not payments_all:
+        st.caption("No payments recorded yet.")
+    else:
+        for r in payments_all[:5]:
+            name      = pid_to_name.get(r["player_id"], "Unknown")
+            notes_txt = r["notes"] or ""
+            method    = notes_txt.split(" — ")[0] if notes_txt else ""
+            sub       = r["payment_date"] + (f" · {method}" if method else "")
+            st.markdown(
+                f"<div style='display:flex;justify-content:space-between;"
+                f"align-items:center;padding:8px 16px;border-radius:8px;"
+                f"background:rgba(5,150,105,0.06);margin-bottom:6px;'>"
+                f"<span style='font-size:0.9rem;'>"
+                f"<span style='font-weight:500;'>{name}</span>"
+                f"<br><span style='color:#64748b;font-size:0.78rem;'>{sub}</span></span>"
+                f"<span style='color:#059669;font-weight:700;font-size:0.95rem;'>"
+                f"₹{r['amount']:,.0f}</span>"
+                f"</div>",
+                unsafe_allow_html=True)
 
 except Exception as e:
     st.warning(f"⚠️ Cannot connect to Supabase — check `.env`.\n\n`{e}`")
