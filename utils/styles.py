@@ -260,7 +260,7 @@ input, textarea, select,
 [data-baseweb="popover"] > div,
 [data-baseweb="menu"] {
     background: var(--dropdown-bg) !important;
-    border: 1.5px solid #f59e0b !important;
+    border: 1.5px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
     box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
     color: var(--dropdown-text) !important;
