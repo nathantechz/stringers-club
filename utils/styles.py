@@ -222,8 +222,7 @@ input, textarea, select,
 [data-testid="stNumberInput"] *,
 [data-testid="stDateInput"] *,
 [data-testid="stTimeInput"] * {
-    color: #292524 !important;
-    -webkit-text-fill-color: #292524 !important;
+    color: var(--text) !important;
 }
 [data-testid="stTextInput"] input:focus,
 [data-testid="stNumberInput"] input:focus {
@@ -235,40 +234,29 @@ input, textarea, select,
     box-shadow: 0 0 0 3px rgba(234,88,12,0.22) !important;
 }
 
-/* ── Selectbox / multiselect — closed trigger ── */
-/* Container */
+/* ── Selectbox / multiselect — container styling only (colours handled by config.toml) ── */
 [data-baseweb="select"],
 [data-testid="stSelectbox"] [data-baseweb="select"],
 [data-testid="stMultiSelect"] [data-baseweb="select"] {
-    background: var(--dropdown-bg) !important;
     border-radius: var(--radius-sm) !important;
 }
-/* Inner control div */
 [data-baseweb="select"] > div,
 [data-testid="stSelectbox"] [data-baseweb="select"] > div,
 [data-testid="stMultiSelect"] [data-baseweb="select"] > div {
-    background: var(--dropdown-bg) !important;
     border: 1.5px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
 }
-/* Nuclear wildcard — forces dark text on every child element regardless of
-   Streamlit's dynamically generated class names. Covers singleValue, placeholder,
-   ValueContainer, option counts, etc.
-   -webkit-text-fill-color overrides in Chrome/Safari when Streamlit CSS-in-JS
-   sets it to a light/transparent value. */
-[data-testid="stSelectbox"] *,
-[data-testid="stMultiSelect"] * {
-    color: #292524 !important;
-    -webkit-text-fill-color: #292524 !important;
+/* Focus ring */
+[data-testid="stSelectbox"] [data-baseweb="select"] > div:focus-within,
+[data-testid="stMultiSelect"] [data-baseweb="select"] > div:focus-within {
+    border-color: var(--accent2) !important;
+    box-shadow: 0 0 0 3px rgba(234,88,12,0.22) !important;
 }
-/* Keep the dropdown chevron icon in accent colour (override the wildcard above) */
+/* Arrow icon colour */
 [data-testid="stSelectbox"] svg,
 [data-testid="stMultiSelect"] svg,
 [data-baseweb="select"] svg {
     fill: var(--accent2) !important;
-    color: var(--accent2) !important;
-    -webkit-text-fill-color: var(--accent2) !important;
-}
 }
 
 /* ── Dropdown popover / menu panel ── */
