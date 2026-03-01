@@ -73,8 +73,25 @@ att_rows = (
 )
 
 pay_rows_all  = sb.table("payments").select("amount").eq("player_id", p_id).execute().data
-total_charged = sum(r["fee_charged"] or 0 for r in att_rows)
 total_paid_all = sum(r["amount"] or 0 for r in pay_rows_all)
+
+# Monthly members: 'charged' = sum of monthly_fee_config entries up to today
+# (fee_charged on attendance stays 0 until the admin runs Distribute)
+is_monthly = (player.get("membership_type") or "") == "monthly"
+if is_monthly:
+    today_month = date.today().strftime("%Y-%m")
+    mc_rows = (
+        sb.table("monthly_fee_config")
+        .select("monthly_fee")
+        .eq("player_id", p_id)
+        .lte("month", today_month)
+        .execute()
+        .data
+    )
+    total_charged = sum(r["monthly_fee"] or 0 for r in mc_rows)
+else:
+    total_charged = sum(r["fee_charged"] or 0 for r in att_rows)
+
 balance_due   = max(0.0, round(total_charged - total_paid_all, 2))
 
 c1, c2 = st.columns(2)

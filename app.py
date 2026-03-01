@@ -33,18 +33,28 @@ try:
     attendance   = sb.table("attendance").select("fee_charged, player_id, session_date, session_time").execute().data
     payments_all = sb.table("payments").select("player_id, amount, payment_date, notes").order("payment_date", desc=True).execute().data
     exp_month    = sb.table("expenditures").select("amount").gte("exp_date", from_month).lte("exp_date", to_month).execute().data
+    # Monthly members: charged = sum of monthly_fee_config for months already due (≤ today)
+    fee_configs  = sb.table("monthly_fee_config").select("player_id, monthly_fee, month").lte("month", month_str).execute().data
 
-    pid_to_name = {p["id"]: p["name"] for p in players}
+    pid_to_name  = {p["id"]: p["name"] for p in players}
+    monthly_pids = {p["id"] for p in players if (p.get("membership_type") or "") == "monthly"}
 
     # ── Derived totals ────────────────────────────────────────────────────────
     total_charged  = sum(r["fee_charged"] or 0 for r in attendance)
     total_paid     = sum(r["amount"]      or 0 for r in payments_all)
 
     # Per-player balance (positive = owes money, negative = overpaid/prepaid)
+    # Monthly members: use monthly_fee_config (fee_charged stays 0 until Distribute runs)
+    # Regular members: use attendance.fee_charged as before
     due_by_pid: dict = {}
+    for r in fee_configs:
+        pid = r["player_id"]
+        if pid in monthly_pids:
+            due_by_pid[pid] = due_by_pid.get(pid, 0.0) + (r["monthly_fee"] or 0)
     for r in attendance:
         pid = r["player_id"]
-        due_by_pid[pid] = due_by_pid.get(pid, 0.0) + (r["fee_charged"] or 0)
+        if pid not in monthly_pids:
+            due_by_pid[pid] = due_by_pid.get(pid, 0.0) + (r["fee_charged"] or 0)
     for r in payments_all:
         pid = r["player_id"]
         due_by_pid[pid] = due_by_pid.get(pid, 0.0) - (r["amount"] or 0)
