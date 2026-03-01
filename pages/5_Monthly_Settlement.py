@@ -99,33 +99,48 @@ with st.form("set_monthly_dues_form"):
 
 # Summary table
 st.markdown("**Current dues for this month:**")
-# Fetch all attendance for this month in one query, then aggregate per player
+# Fetch session counts from attendance
 all_att_month = (
     sb.table("attendance")
-    .select("player_id, fee_charged, amount_paid")
+    .select("player_id, fee_charged")
     .gte("session_date", from_date)
     .lte("session_date", to_date)
     .execute()
     .data
 )
 att_count_by_pid = {}
-att_paid_by_pid  = {}
 for r in all_att_month:
     pid = r["player_id"]
     att_count_by_pid[pid] = att_count_by_pid.get(pid, 0) + 1
-    att_paid_by_pid[pid]  = att_paid_by_pid.get(pid, 0) + (r["amount_paid"] or 0)
+
+# Fetch actual payments received this month from the payments table
+# (more accurate than attendance.amount_paid which only reflects distributed amounts)
+all_player_ids = [p["id"] for p in monthly_players]
+all_payments_month = (
+    sb.table("payments")
+    .select("player_id, amount")
+    .in_("player_id", all_player_ids)
+    .gte("payment_date", from_date)
+    .lte("payment_date", to_date)
+    .execute()
+    .data
+)
+payments_by_pid = {}
+for r in all_payments_month:
+    pid = r["player_id"]
+    payments_by_pid[pid] = payments_by_pid.get(pid, 0.0) + (r["amount"] or 0)
 
 summary_rows = []
 for p in monthly_players:
     pid           = p["id"]
     monthly_fee   = config_by_pid.get(pid, p.get("monthly_fee") or 0.0)
     att_count     = att_count_by_pid.get(pid, 0)
-    paid          = att_paid_by_pid.get(pid, 0.0)
+    paid          = payments_by_pid.get(pid, 0.0)
     summary_rows.append({
         "Player":          p["name"],
         "Monthly Fee (₹)": monthly_fee,
         "Sessions":        att_count,
-        "Paid (₹)":        paid,
+        "Paid (₹)":        round(paid, 2),
         "Due (₹)":         round(monthly_fee - paid, 2),
         "Configured":      "✅" if pid in config_by_pid else "⚠️ Not set",
     })
