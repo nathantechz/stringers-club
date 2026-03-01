@@ -96,17 +96,26 @@ exp_rows = (
 
 att_rows = (
     sb.table("attendance")
-    .select("fee_charged, amount_paid")
+    .select("fee_charged")
     .gte("session_date", from_date)
     .lte("session_date", to_date)
     .execute()
     .data
 )
 
+pay_rows = (
+    sb.table("payments")
+    .select("amount")
+    .gte("payment_date", from_date)
+    .lte("payment_date", to_date)
+    .execute()
+    .data
+)
 
-# ── P&L Metrics ──────────────────────────────────────────────────────────────
-total_revenue  = sum(r["fee_charged"] or 0 for r in att_rows)
-total_collected = sum(r["amount_paid"] or 0 for r in att_rows)
+
+# ── P&L Metrics ───────────────────────────────────────────────────────────────────────────────
+total_revenue   = sum(r["fee_charged"] or 0 for r in att_rows)
+total_collected = sum(r["amount"] or 0 for r in pay_rows)
 total_exp      = sum(r["amount"] for r in exp_rows)
 profit         = total_collected - total_exp
 
