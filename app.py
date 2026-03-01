@@ -33,8 +33,8 @@ try:
     attendance   = sb.table("attendance").select("fee_charged, player_id, session_date, session_time").execute().data
     payments_all = sb.table("payments").select("player_id, amount, payment_date, notes").order("payment_date", desc=True).execute().data
     exp_month    = sb.table("expenditures").select("amount").gte("exp_date", from_month).lte("exp_date", to_month).execute().data
-    # Monthly members: charged = sum of monthly_fee_config for months already due (≤ today)
-    fee_configs  = sb.table("monthly_fee_config").select("player_id, monthly_fee, month").lte("month", month_str).execute().data
+    # Monthly members: fee for THIS month only (mirrors Monthly Settlement tab view)
+    fee_configs  = sb.table("monthly_fee_config").select("player_id, monthly_fee").eq("month", month_str).execute().data
 
     pid_to_name  = {p["id"]: p["name"] for p in players}
     monthly_pids = {p["id"] for p in players if (p.get("membership_type") or "") == "monthly"}
@@ -43,21 +43,31 @@ try:
     total_charged  = sum(r["fee_charged"] or 0 for r in attendance)
     total_paid     = sum(r["amount"]      or 0 for r in payments_all)
 
+    # Payments made in the current month (used for monthly member dues)
+    month_pay_by_pid: dict = {}
+    for r in payments_all:
+        if str(r["payment_date"])[:7] == month_str:
+            pid = r["player_id"]
+            month_pay_by_pid[pid] = month_pay_by_pid.get(pid, 0.0) + (r["amount"] or 0)
+
     # Per-player balance (positive = owes money, negative = overpaid/prepaid)
-    # Monthly members: use monthly_fee_config (fee_charged stays 0 until Distribute runs)
-    # Regular members: use attendance.fee_charged as before
+    # Monthly members: THIS month's fee_config minus THIS month's payments
+    # Regular members:  all-time fee_charged minus all-time payments
     due_by_pid: dict = {}
     for r in fee_configs:
         pid = r["player_id"]
         if pid in monthly_pids:
-            due_by_pid[pid] = due_by_pid.get(pid, 0.0) + (r["monthly_fee"] or 0)
+            fee  = r["monthly_fee"] or 0
+            paid = month_pay_by_pid.get(pid, 0.0)
+            due_by_pid[pid] = fee - paid
     for r in attendance:
         pid = r["player_id"]
         if pid not in monthly_pids:
             due_by_pid[pid] = due_by_pid.get(pid, 0.0) + (r["fee_charged"] or 0)
     for r in payments_all:
         pid = r["player_id"]
-        due_by_pid[pid] = due_by_pid.get(pid, 0.0) - (r["amount"] or 0)
+        if pid not in monthly_pids:
+            due_by_pid[pid] = due_by_pid.get(pid, 0.0) - (r["amount"] or 0)
     # Only sum positive balances — overpaid players don't cancel others' debts
     total_due      = sum(v for v in due_by_pid.values() if v > 0.005)
 

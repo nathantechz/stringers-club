@@ -72,10 +72,10 @@ att_rows = (
     .data
 )
 
-pay_rows_all  = sb.table("payments").select("amount").eq("player_id", p_id).execute().data
+pay_rows_all  = sb.table("payments").select("amount, payment_date").eq("player_id", p_id).execute().data
 total_paid_all = sum(r["amount"] or 0 for r in pay_rows_all)
 
-# Monthly members: 'charged' = sum of monthly_fee_config entries up to today
+# Monthly members: charged = THIS month's fee_config; paid = THIS month's payments
 # (fee_charged on attendance stays 0 until the admin runs Distribute)
 is_monthly = (player.get("membership_type") or "") == "monthly"
 if is_monthly:
@@ -84,22 +84,29 @@ if is_monthly:
         sb.table("monthly_fee_config")
         .select("monthly_fee")
         .eq("player_id", p_id)
-        .lte("month", today_month)
+        .eq("month", today_month)
         .execute()
         .data
     )
     total_charged = sum(r["monthly_fee"] or 0 for r in mc_rows)
+    # Only count payments made this month for balance calculation
+    total_paid_for_balance = sum(
+        r["amount"] or 0 for r in pay_rows_all
+        if str(r["payment_date"])[:7] == today_month
+    )
 else:
     total_charged = sum(r["fee_charged"] or 0 for r in att_rows)
+    total_paid_for_balance = total_paid_all
 
-balance_due   = max(0.0, round(total_charged - total_paid_all, 2))
+balance_due   = max(0.0, round(total_charged - total_paid_for_balance, 2))
 
 c1, c2 = st.columns(2)
 c1.metric("Sessions", len(att_rows))
 c2.metric("Balance Due", f"₹{balance_due:,.0f}")
 c3, c4 = st.columns(2)
+paid_label = "Paid (this month)" if is_monthly else "Paid"
 c3.metric("Charged", f"₹{total_charged:,.0f}")
-c4.metric("Paid", f"₹{total_paid_all:,.0f}")
+c4.metric(paid_label, f"₹{total_paid_for_balance:,.0f}")
 
 st.divider()
 
