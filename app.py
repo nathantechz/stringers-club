@@ -158,24 +158,34 @@ try:
 
     st.divider()
 
-    # ── Section 4: Top dues ───────────────────────────────────────────────────
-    # Reuse due_by_pid computed above
-    top_dues = sorted(
-        [{"name": pid_to_name.get(pid, "Unknown"), "due": round(v, 2)}
+    # ── Section 4: All players with outstanding dues ──────────────────────────
+    # Build last-payment-date lookup from payments_all (already ordered desc)
+    last_pay_date: dict = {}
+    for r in payments_all:
+        pid = r["player_id"]
+        if pid not in last_pay_date:
+            last_pay_date[pid] = r["payment_date"]
+
+    all_dues = sorted(
+        [{"pid": pid, "name": pid_to_name.get(pid, "Unknown"), "due": round(v, 2)}
          for pid, v in due_by_pid.items() if v > 0.5],
         key=lambda x: x["due"], reverse=True
-    )[:5]
+    )
 
-    st.markdown("**🔴 Top Outstanding Dues**")
-    if not top_dues:
+    st.markdown(f"**🔴 Pending Dues — {len(all_dues)} player(s)**")
+    if not all_dues:
         st.success("✅ All players are clear — no outstanding dues!")
     else:
-        for row in top_dues:
+        for row in all_dues:
+            last_p = last_pay_date.get(row["pid"])
+            sub    = f"Last paid: {last_p}" if last_p else "Never paid"
             st.markdown(
                 f"<div style='display:flex;justify-content:space-between;"
                 f"align-items:center;padding:8px 16px;border-radius:8px;"
                 f"background:rgba(220,38,38,0.06);margin-bottom:6px;'>"
-                f"<span style='font-size:0.9rem;font-weight:500;'>{row['name']}</span>"
+                f"<span style='font-size:0.9rem;'>"
+                f"<span style='font-weight:500;'>{row['name']}</span>"
+                f"<br><span style='color:#94a3b8;font-size:0.78rem;'>{sub}</span></span>"
                 f"<span style='color:#dc2626;font-weight:700;font-size:0.95rem;'>"
                 f"₹{row['due']:,.0f}</span>"
                 f"</div>",
