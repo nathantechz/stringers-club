@@ -234,6 +234,23 @@ input, textarea, select,
     box-shadow: 0 0 0 3px rgba(234,88,12,0.22) !important;
 }
 
+/* ── Selectbox glitch fixes ── */
+/* 1. Force text container visible and left-aligned */
+div[data-baseweb="select"] div[role="button"] {
+    text-align: left !important;
+    padding-left: 10px !important;
+}
+/* 2. Ensure text isn't hidden by overflow rules */
+div[data-baseweb="select"] * {
+    overflow: visible !important;
+    text-overflow: clip !important;
+}
+/* 3. Fix the 'two lines' glitch — reset flexbox alignment on trigger */
+.stSelectbox div[data-baseweb="select"] > div:first-child {
+    display: flex !important;
+    align-items: center !important;
+}
+
 /* ── Selectbox / multiselect — container styling only (colours handled by config.toml) ── */
 [data-baseweb="select"],
 [data-testid="stSelectbox"] [data-baseweb="select"],
