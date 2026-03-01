@@ -60,8 +60,8 @@ def _style(fig):
 
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_day, tab_week, tab_month, tab_players, tab_dues = st.tabs(
-    ["📅 Day", "📆 Week", "🗓 Month", "👤 Players", "💳 Dues"]
+tab_day, tab_week, tab_month, tab_players, tab_dues, tab_revenue = st.tabs(
+    ["📅 Day", "📆 Week", "🗓 Month", "👤 Players", "💳 Dues", "💰 Revenue"]
 )
 
 # ════════════════════════════════════════════════════════════
@@ -253,3 +253,67 @@ with tab_dues:
         fig.update_layout(height=max(250, len(dues_df) * 36))
         st.plotly_chart(_style(fig), use_container_width=True)
         st.dataframe(dues_df, use_container_width=True, hide_index=True)
+
+# ════════════════════════════════════════════════════════════
+# REVENUE — payments collected over time
+# ════════════════════════════════════════════════════════════
+with tab_revenue:
+    pay_raw = sb.table("payments").select("player_id, amount, payment_date").execute().data
+
+    if not pay_raw:
+        st.info("No payment records yet.")
+    else:
+        pay_df = pd.DataFrame(pay_raw)
+        pay_df["payment_date"] = pd.to_datetime(pay_df["payment_date"])
+        pay_df["month"] = pay_df["payment_date"].dt.to_period("M").astype(str)
+        pay_df["amount"] = pay_df["amount"].astype(float)
+        pay_df["player_name"] = pay_df["player_id"].map(pid_to_name)
+
+        # Total revenue collected (all time)
+        total_rev = pay_df["amount"].sum()
+        num_payments = len(pay_df)
+        col_a, col_b = st.columns(2)
+        col_a.metric("Total Revenue Collected", f"₹{total_rev:,.0f}")
+        col_b.metric("Number of Payments", num_payments)
+
+        st.markdown("---")
+
+        # Monthly revenue bar chart
+        monthly_rev = pay_df.groupby("month")["amount"].sum().reset_index(name="revenue")
+        monthly_rev = monthly_rev.sort_values("month")
+        fig_rev = px.bar(
+            monthly_rev, x="month", y="revenue",
+            color_discrete_sequence=[ACCENT],
+            labels={"month": "Month", "revenue": "Revenue (₹)"},
+            title="Monthly Revenue Collected",
+            text="revenue",
+        )
+        fig_rev.update_traces(texttemplate="₹%{text:,.0f}", textposition="outside")
+        st.plotly_chart(_style(fig_rev), use_container_width=True)
+
+        # Revenue by player
+        player_rev = (
+            pay_df.groupby("player_name")["amount"]
+            .sum().reset_index(name="revenue")
+            .sort_values("revenue", ascending=True)
+        )
+        fig_p = px.bar(
+            player_rev, x="revenue", y="player_name",
+            orientation="h",
+            color="revenue",
+            color_continuous_scale=["#dbeafe", ACCENT],
+            labels={"revenue": "Amount Paid (₹)", "player_name": "Player"},
+            title="Revenue by Player",
+            text="revenue",
+        )
+        fig_p.update_traces(texttemplate="₹%{text:,.0f}", textposition="outside")
+        fig_p.update_coloraxes(showscale=False)
+        fig_p.update_layout(height=max(250, len(player_rev) * 36))
+        st.plotly_chart(_style(fig_p), use_container_width=True)
+
+        # Detailed table
+        st.markdown("**Monthly Revenue Details**")
+        detail = pay_df.groupby(["month", "player_name"])["amount"].sum().reset_index()
+        detail.columns = ["Month", "Player", "Amount Paid (₹)"]
+        detail = detail.sort_values(["Month", "Amount Paid (₹)"], ascending=[True, False])
+        st.dataframe(detail, use_container_width=True, hide_index=True)
