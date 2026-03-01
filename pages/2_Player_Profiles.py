@@ -52,16 +52,17 @@ att_rows = (
     .data
 )
 
-total_charged  = sum(r["fee_charged"] or 0 for r in att_rows)
-total_paid_att = sum(r["amount_paid"]  or 0 for r in att_rows)
-balance_due    = total_charged - total_paid_att
+pay_rows_all  = sb.table("payments").select("amount").eq("player_id", p_id).execute().data
+total_charged = sum(r["fee_charged"] or 0 for r in att_rows)
+total_paid_all = sum(r["amount"] or 0 for r in pay_rows_all)
+balance_due   = total_charged - total_paid_all
 
 c1, c2 = st.columns(2)
 c1.metric("Sessions", len(att_rows))
 c2.metric("Balance Due", f"₹{balance_due:,.0f}")
 c3, c4 = st.columns(2)
 c3.metric("Charged", f"₹{total_charged:,.0f}")
-c4.metric("Paid", f"₹{total_paid_att:,.0f}")
+c4.metric("Paid", f"₹{total_paid_all:,.0f}")
 
 st.divider()
 
@@ -111,9 +112,9 @@ pay_rows = (
 if pay_rows:
     pay_df = pd.DataFrame([
         {
-            "Date":    r["payment_date"],
-            "Amount (₹)": r["amount"],
-            "Notes":   r["notes"] or "",
+            "Date":          r["payment_date"],
+            "Amount (₹)":    r["amount"],
+            "Method / Notes": r["notes"] or "",
         }
         for r in pay_rows
     ])

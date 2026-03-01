@@ -41,14 +41,21 @@ is_monthly = player.get("membership_type") == "monthly"
 # ── Player status card ────────────────────────────────────────────────────────
 all_att = (
     sb.table("attendance")
-    .select("fee_charged, amount_paid")
+    .select("fee_charged")
     .eq("player_id", p_id)
     .execute()
     .data
 )
-total_due      = sum((r["fee_charged"] or 0) - (r["amount_paid"] or 0) for r in all_att)
-total_charged  = sum(r["fee_charged"]  or 0 for r in all_att)
-total_paid_all = sum(r["amount_paid"]  or 0 for r in all_att)
+pay_all = (
+    sb.table("payments")
+    .select("amount")
+    .eq("player_id", p_id)
+    .execute()
+    .data
+)
+total_charged  = sum(r["fee_charged"] or 0 for r in all_att)
+total_paid_all = sum(r["amount"]      or 0 for r in pay_all)
+total_due      = total_charged - total_paid_all
 
 mem_color = "var(--accent3)" if is_monthly else "var(--accent2)"
 mem_label = "📅 Monthly member" if is_monthly else "🏸 Daily / Regular"
@@ -217,15 +224,24 @@ with tab_pay:
 
         month_att = (
             sb.table("attendance")
-            .select("fee_charged, amount_paid")
+            .select("fee_charged")
             .eq("player_id", p_id)
             .gte("session_date", from_dt)
             .lte("session_date", to_dt)
             .execute()
             .data
         )
+        month_pays = (
+            sb.table("payments")
+            .select("amount")
+            .eq("player_id", p_id)
+            .gte("payment_date", from_dt)
+            .lte("payment_date", to_dt)
+            .execute()
+            .data
+        )
         month_sessions = len(month_att)
-        month_paid     = sum(r["amount_paid"] or 0 for r in month_att)
+        month_paid     = sum(r["amount"] or 0 for r in month_pays)
 
         mm1, mm2, mm3 = st.columns(3)
         mm1.metric("Sessions this month", month_sessions)
@@ -468,31 +484,6 @@ with tab_history:
                     st.rerun()
 
         st.divider()
-        with st.expander("✏️ Edit a payment", expanded=False):
-            pay_labels = [
-                f"{r['payment_date']}  ·  ₹{r['amount']:.2f}"
-                + (f"  · {r['notes']}" if r.get("notes") else "")
-                for r in pay_records
-            ]
-            sel_label = st.selectbox("Choose payment", pay_labels, key="edit_pay_sel")
-            chosen    = pay_records[pay_labels.index(sel_label)]
-
-            with st.form("edit_payment_form"):
-                e1, e2     = st.columns(2)
-                new_amount = e1.number_input("Amount (₹)", min_value=0.0, step=10.0, value=float(chosen["amount"]))
-                new_date   = e2.date_input("Date", value=date.fromisoformat(str(chosen["payment_date"])[:10]))
-                new_notes  = st.text_input("Notes", value=chosen.get("notes") or "")
-                update_btn = st.form_submit_button("💾 Update Payment")
-
-                if update_btn:
-                    sb.table("payments").update({
-                        "amount":       new_amount,
-                        "payment_date": str(new_date),
-                        "notes":        new_notes or None,
-                    }).eq("id", chosen["id"]).execute()
-                    st.success("✅ Payment updated.")
-                    st.rerun()
-
 
     edit_mode = st.radio(
         "What to edit",
@@ -507,15 +498,6 @@ with tab_history:
     # MODE A — Edit / delete a payment record from the payments table
     # ──────────────────────────────────────────────────────────────────────
     if edit_mode == "💰 Payment records":
-        pay_records = (
-            sb.table("payments")
-            .select("*")
-            .eq("player_id", p_id)
-            .order("payment_date", desc=True)
-            .execute()
-            .data
-        )
-
         if not pay_records:
             st.info(f"No payment records found for {player_name}.")
         else:

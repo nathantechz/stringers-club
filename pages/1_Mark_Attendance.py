@@ -130,7 +130,7 @@ if existing:
                     if pay:
                         new_amt = max(0.0, round((pay[0]["amount"] or 0) - (lnk["applied_amount"] or 0), 2))
                         sb.table("payments").update({"amount": new_amt}).eq("id", lnk["payment_id"]).execute()
-                    sb.table("payment_attendance").delete().eq("attendance_id", r["id"]).execute()
+                sb.table("payment_attendance").delete().eq("attendance_id", r["id"]).execute()
                 sb.table("attendance").delete().eq("id", r["id"]).execute()
                 st.success(f"🗑️ {pname} removed from this session.")
                 st.rerun()

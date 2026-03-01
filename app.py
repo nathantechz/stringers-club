@@ -20,11 +20,12 @@ st.caption("Admin · Pro Sports Arena (Behind BYG Brewski), Kothanur")
 try:
     from utils.supabase_client import get_client
     sb = get_client()
-    players    = sb.table("players").select("id").eq("is_active", True).execute().data
-    attendance = sb.table("attendance").select("fee_charged, amount_paid").execute().data
+    players      = sb.table("players").select("id").eq("is_active", True).execute().data
+    attendance   = sb.table("attendance").select("fee_charged, player_id, session_date, session_time").execute().data
+    payments_all = sb.table("payments").select("amount").execute().data
 
     total_charged = sum(r["fee_charged"] or 0 for r in attendance)
-    total_paid    = sum(r["amount_paid"]  or 0 for r in attendance)
+    total_paid    = sum(r["amount"]      or 0 for r in payments_all)
     total_due     = total_charged - total_paid
 
     c1, c2 = st.columns(2)
@@ -38,10 +39,8 @@ try:
     st.divider()
     today     = date.today()
     today_dow = today.strftime("%A")
-    att_all   = sb.table("attendance").select("player_id, session_date, session_time").execute().data
-
-    if att_all:
-        adf = pd.DataFrame(att_all)
+    if attendance:
+        adf = pd.DataFrame(attendance)
         adf["session_date"] = pd.to_datetime(adf["session_date"])
         adf["day_of_week"]  = adf["session_date"].dt.day_name()
         # exclude today
