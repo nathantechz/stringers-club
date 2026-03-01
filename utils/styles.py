@@ -216,12 +216,13 @@ input, textarea, select,
     font-size: 0.92rem !important;
     padding: 10px 12px !important;
 }
-/* Wildcard text colour for all input widget internals */
+/* Wildcard text colour for all input widget internals — include webkit fill */
 [data-testid="stTextInput"] *,
 [data-testid="stNumberInput"] *,
 [data-testid="stDateInput"] *,
 [data-testid="stTimeInput"] * {
-    color: var(--text) !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
 }
 [data-testid="stTextInput"] input:focus,
 [data-testid="stNumberInput"] input:focus {
@@ -248,14 +249,18 @@ input, textarea, select,
     background: var(--card) !important;
     border: 1.5px solid var(--border) !important;
     border-radius: var(--radius-sm) !important;
-    color: var(--text) !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
 }
 /* Nuclear wildcard — forces dark text on every child element regardless of
    Streamlit's dynamically generated class names. Covers singleValue, placeholder,
-   ValueContainer, option counts, etc. */
+   ValueContainer, option counts, etc.
+   -webkit-text-fill-color overrides in Chrome/Safari when Streamlit CSS-in-JS
+   sets it to a light/transparent value. */
 [data-testid="stSelectbox"] *,
 [data-testid="stMultiSelect"] * {
-    color: var(--text) !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
 }
 /* Keep the dropdown chevron icon in accent colour (override the wildcard above) */
 [data-testid="stSelectbox"] svg,
@@ -263,6 +268,8 @@ input, textarea, select,
 [data-baseweb="select"] svg {
     fill: var(--accent2) !important;
     color: var(--accent2) !important;
+    -webkit-text-fill-color: var(--accent2) !important;
+}
 }
 
 /* ── Dropdown popover / menu panel ── */
