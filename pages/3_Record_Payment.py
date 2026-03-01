@@ -26,15 +26,17 @@ if not players_raw:
     st.info("No active players. Add some on the Manage Players page.")
     st.stop()
 
+# Player selection lives ABOVE the tabs so changing it doesn't fight with tab state
+player_name = st.selectbox("Select player", [p["name"] for p in players_raw], key="player_select")
+player = next(p for p in players_raw if p["name"] == player_name)
+p_id = player["id"]
+
 tab_new, tab_edit = st.tabs(["➕ Record New", "✏️ Edit Existing"])
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 1 — Record New Payment
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_new:
-    player_name = st.selectbox("Select player", [p["name"] for p in players_raw], key="new_player")
-    player = next(p for p in players_raw if p["name"] == player_name)
-    p_id = player["id"]
 
     att_rows = (
         sb.table("attendance")
@@ -142,12 +144,10 @@ with tab_new:
 # TAB 2 — Edit Existing Payment
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_edit:
-    edit_player_name = st.selectbox(
-        "Select player", [p["name"] for p in players_raw], key="edit_player"
-    )
-    edit_player = next(p for p in players_raw if p["name"] == edit_player_name)
-    ep_id      = edit_player["id"]
-    is_monthly = edit_player.get("membership_type") == "monthly"
+    # Reuse the player selected above the tabs
+    ep_id      = p_id
+    is_monthly = player.get("membership_type") == "monthly"
+    edit_player_name = player_name
 
     badge_color = "var(--accent3)" if is_monthly else "var(--accent2)"
     badge_label = "Monthly member" if is_monthly else "Daily / Regular"
