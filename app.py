@@ -29,7 +29,7 @@ try:
     to_month   = f"{month_str}-{calendar.monthrange(today.year, today.month)[1]:02d}"
 
     # ── Single batch fetch ────────────────────────────────────────────────────
-    players      = sb.table("players").select("id, name, date_joined").eq("is_active", True).execute().data
+    players      = sb.table("players").select("*").eq("is_active", True).execute().data
     attendance   = sb.table("attendance").select("fee_charged, player_id, session_date, session_time").execute().data
     payments_all = sb.table("payments").select("player_id, amount, payment_date, notes").order("payment_date", desc=True).execute().data
     exp_month    = sb.table("expenditures").select("amount").gte("exp_date", from_month).lte("exp_date", to_month).execute().data
