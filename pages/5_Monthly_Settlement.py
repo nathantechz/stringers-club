@@ -1,6 +1,6 @@
 """
-Page 5 — Monthly Settlement
-• Top section: Set / review monthly dues for ALL monthly members for a chosen month
+Page 5 — Monthly Dues
+• Top section: Set / review monthly fees for ALL monthly members for a chosen month
   (pre-filled from each player's default fee, editable per player).
 • Bottom section: Distribute a player's monthly fee across their attended sessions.
 """
@@ -16,10 +16,11 @@ from utils.supabase_client import get_client
 from utils.styles import inject_mobile_css
 from utils.helpers import show_back_button
 
-st.set_page_config(page_title="Monthly Settlement", page_icon="📅", layout="centered")
+st.set_page_config(page_title="Monthly Dues", page_icon="📅", layout="centered")
 inject_mobile_css()
 show_back_button()
-st.markdown("## 📅 Monthly Settlement")
+st.markdown("## 📅 Monthly Dues")
+st.caption("Configure what each monthly member owes, and distribute fees across attended sessions.")
 
 sb = get_client()
 

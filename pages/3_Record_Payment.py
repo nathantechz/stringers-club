@@ -1,5 +1,5 @@
 """
-Page 3 — Record Payment  (revamped)
+Page 3 — Collect Payment  (revamped)
 
 Three payment workflows:
   • ⚡ Quick Pay   — daily players pay for today's / recent session on the spot
@@ -19,10 +19,11 @@ from utils.supabase_client import get_client
 from utils.styles import inject_mobile_css
 from utils.helpers import show_back_button
 
-st.set_page_config(page_title="Record Payment", page_icon="💳", layout="centered")
+st.set_page_config(page_title="Collect Payment", page_icon="💳", layout="centered")
 inject_mobile_css()
 show_back_button()
-st.markdown("## 💳 Record Payment")
+st.markdown("## 💳 Collect Payment")
+st.caption("Record money received from players — cash, UPI, or monthly lump sum.")
 
 sb = get_client()
 

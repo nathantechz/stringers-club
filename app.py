@@ -80,14 +80,14 @@ with c2:
 # Row 2
 c3, c4 = st.columns(2)
 with c3:
-    st.page_link("pages/3_Record_Payment.py",     label="💳 Record\nPayment",         use_container_width=True)
+    st.page_link("pages/3_Record_Payment.py",     label="💳 Collect\nPayment",        use_container_width=True)
 with c4:
     st.page_link("pages/4_Manage_Players.py",     label="🧑‍🤝‍🧑 Manage\nPlayers",   use_container_width=True)
 
 # Row 3
 c5, c6 = st.columns(2)
 with c5:
-    st.page_link("pages/5_Monthly_Settlement.py", label="📅 Monthly\nSettlement",     use_container_width=True)
+    st.page_link("pages/5_Monthly_Settlement.py", label="📅 Monthly\nDues",           use_container_width=True)
 with c6:
     st.page_link("pages/6_Analytics.py",          label="📊 Analytics",               use_container_width=True)
 
