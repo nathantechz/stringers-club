@@ -11,6 +11,23 @@ sys.path.insert(0, os.path.dirname(__file__))
 from utils.styles import inject_mobile_css
 
 
+# Court capacity caps
+# Morning: 1 court on weekdays (Mon–Fri) → max 7 players
+# Evening: 2 courts every day → max 14 players
+_CAPACITY = {
+    "morning_weekday": 7,
+    "morning_weekend": 7,  # same single court; adjust if weekends differ
+    "evening": 14,
+}
+
+
+def _slot_cap(slot: str, dow: int) -> int:
+    """Return the hard player cap for a given slot and day-of-week (0=Mon)."""
+    if slot == "evening":
+        return _CAPACITY["evening"]
+    return _CAPACITY["morning_weekday"] if dow < 5 else _CAPACITY["morning_weekend"]
+
+
 @st.cache_data(ttl="1d", show_spinner=False)
 def _train_forecast_models(attendance_json: str, target_date_str: str):
     """Train per-slot Ridge Regression models.
@@ -22,6 +39,7 @@ def _train_forecast_models(attendance_json: str, target_date_str: str):
 
     attendance_rows = json.loads(attendance_json)
     tomorrow = _date.fromisoformat(target_date_str)
+    tomorrow_dow = pd.Timestamp(tomorrow).dayofweek   # 0=Mon
 
     if not attendance_rows:
         return {"morning": (None, None), "evening": (None, None)}
@@ -55,13 +73,17 @@ def _train_forecast_models(attendance_json: str, target_date_str: str):
         return df[["trend", "month", "week", "dow_enc", "lag1", "roll4"]].values, df["count"].values
 
     def _fit_slot(slot):
+        cap = _slot_cap(slot, tomorrow_dow)
         s = all_counts[all_counts["session_time"] == slot].copy()
         if s.empty:
             return None, None
         if len(s) < 5:          # not enough history — simple mean fallback
             avg = s["count"].mean()
             std = s["count"].std() if len(s) > 1 else 0
-            return max(1, math.ceil(avg)), f"{max(1, math.floor(avg))}–{math.ceil(avg + std)}"
+            pred = min(cap, max(1, math.ceil(avg)))
+            lo   = max(1, math.floor(avg))
+            hi   = min(cap, math.ceil(avg + std))
+            return pred, f"{lo}–{hi}"
 
         X, y = _make_features(s)
         scaler = StandardScaler()
@@ -75,16 +97,16 @@ def _train_forecast_models(attendance_json: str, target_date_str: str):
             (pd.Timestamp(tomorrow) - epoch).days,
             tomorrow.month,
             int(pd.Timestamp(tomorrow).isocalendar()[1]),
-            pd.Timestamp(tomorrow).dayofweek,
+            tomorrow_dow,
             last_count,
             roll4_val,
         ]])
         pred_val = model.predict(scaler.transform(x_tom))[0]
-        pred_int = max(1, math.ceil(pred_val))
+        pred_int = min(cap, max(1, math.ceil(pred_val)))
 
         res_std = (y - model.predict(X_sc)).std() if len(y) > 1 else 0
         lo = max(1, math.floor(pred_val - res_std))
-        hi = math.ceil(pred_val + res_std)
+        hi = min(cap, math.ceil(pred_val + res_std))
         return pred_int, f"{lo}–{hi}"
 
     return {
