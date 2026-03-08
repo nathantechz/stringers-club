@@ -2,10 +2,95 @@ import streamlit as st
 import pandas as pd
 import math
 import calendar
+import numpy as np
 from datetime import date
+from sklearn.linear_model import Ridge
+from sklearn.preprocessing import StandardScaler
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from utils.styles import inject_mobile_css
+
+
+@st.cache_data(ttl="1d", show_spinner=False)
+def _train_forecast_models(attendance_json: str, target_date_str: str):
+    """Train per-slot Ridge Regression models.
+    Cache expires daily so the model always incorporates yesterday's sessions.
+    `attendance_json` and `target_date_str` are the cache-key inputs.
+    """
+    import json
+    from datetime import date as _date, timedelta
+
+    attendance_rows = json.loads(attendance_json)
+    tomorrow = _date.fromisoformat(target_date_str)
+
+    if not attendance_rows:
+        return {"morning": (None, None), "evening": (None, None)}
+
+    adf = pd.DataFrame(attendance_rows)
+    adf["session_date"] = pd.to_datetime(adf["session_date"])
+
+    all_counts = (
+        adf[adf["session_date"].dt.date < tomorrow]
+        .groupby(["session_date", "session_time"])["player_id"]
+        .nunique()
+        .reset_index()
+        .rename(columns={"player_id": "count"})
+    )
+    all_counts["session_date"] = pd.to_datetime(all_counts["session_date"])
+    all_counts = all_counts.sort_values("session_date")
+
+    if all_counts.empty:
+        return {"morning": (None, None), "evening": (None, None)}
+
+    epoch = all_counts["session_date"].min()
+
+    def _make_features(df):
+        df = df.copy().reset_index(drop=True)
+        df["trend"]   = (df["session_date"] - epoch).dt.days
+        df["month"]   = df["session_date"].dt.month
+        df["week"]    = df["session_date"].dt.isocalendar().week.astype(int)
+        df["dow_enc"] = df["session_date"].dt.dayofweek
+        df["lag1"]    = df["count"].shift(1).fillna(df["count"].mean())
+        df["roll4"]   = df["count"].shift(1).rolling(4, min_periods=1).mean().fillna(df["count"].mean())
+        return df[["trend", "month", "week", "dow_enc", "lag1", "roll4"]].values, df["count"].values
+
+    def _fit_slot(slot):
+        s = all_counts[all_counts["session_time"] == slot].copy()
+        if s.empty:
+            return None, None
+        if len(s) < 5:          # not enough history — simple mean fallback
+            avg = s["count"].mean()
+            std = s["count"].std() if len(s) > 1 else 0
+            return max(1, math.ceil(avg)), f"{max(1, math.floor(avg))}–{math.ceil(avg + std)}"
+
+        X, y = _make_features(s)
+        scaler = StandardScaler()
+        X_sc   = scaler.fit_transform(X)
+        model  = Ridge(alpha=1.0)
+        model.fit(X_sc, y)
+
+        last_count = s["count"].iloc[-1]
+        roll4_val  = s["count"].tail(4).mean()
+        x_tom = np.array([[
+            (pd.Timestamp(tomorrow) - epoch).days,
+            tomorrow.month,
+            int(pd.Timestamp(tomorrow).isocalendar()[1]),
+            pd.Timestamp(tomorrow).dayofweek,
+            last_count,
+            roll4_val,
+        ]])
+        pred_val = model.predict(scaler.transform(x_tom))[0]
+        pred_int = max(1, math.ceil(pred_val))
+
+        res_std = (y - model.predict(X_sc)).std() if len(y) > 1 else 0
+        lo = max(1, math.floor(pred_val - res_std))
+        hi = math.ceil(pred_val + res_std)
+        return pred_int, f"{lo}–{hi}"
+
+    return {
+        "morning": _fit_slot("morning"),
+        "evening": _fit_slot("evening"),
+    }
 
 st.set_page_config(
     page_title="StringerS Club",
@@ -118,28 +203,24 @@ try:
 
     st.divider()
 
-    # ── Section 3 (was forecast): Forecast ───────────────────────────────────
+    # ── Section 3 (was forecast): Forecast (Ridge Regression ML) ────────────
     from datetime import timedelta
+    import json
+
     tomorrow     = today + timedelta(days=1)
     tomorrow_dow = tomorrow.strftime("%A")
     st.markdown(f"**🔮 Tomorrow's Forecast — {tomorrow_dow}, {tomorrow.strftime('%d %b')}**")
     if attendance:
-        adf = pd.DataFrame(attendance)
-        adf["session_date"] = pd.to_datetime(adf["session_date"])
-        adf["day_of_week"]  = adf["session_date"].dt.day_name()
-        hist = adf[(adf["day_of_week"] == tomorrow_dow) & (adf["session_date"].dt.date < tomorrow)]
-
-        def _pred(slot):
-            s = hist[hist["session_time"] == slot]
-            if s.empty:
-                return None, None
-            counts = s.groupby("session_date")["player_id"].nunique().tail(8)
-            avg = counts.mean()
-            hi  = math.ceil((avg + counts.std()) if len(counts) > 1 else avg)
-            return max(1, math.ceil(avg)), f"{max(1, math.floor(avg))}–{hi}"
-
-        m_pred, m_rng = _pred("morning")
-        e_pred, e_rng = _pred("evening")
+        # Pass attendance as JSON so the cache key is stable and hashable.
+        # Cache TTL = 1 day → model retrained automatically each day with fresh data.
+        preds = _train_forecast_models(
+            json.dumps([{"player_id": r["player_id"],
+                         "session_date": str(r["session_date"]),
+                         "session_time": r["session_time"]} for r in attendance]),
+            str(tomorrow),
+        )
+        m_pred, m_rng = preds["morning"]
+        e_pred, e_rng = preds["evening"]
 
         def _fc_line(label, pred, rng):
             if pred:
@@ -163,7 +244,7 @@ try:
                     unsafe_allow_html=True)
         _fc_line("☀️ Morning (7–8 AM)", m_pred, m_rng)
         _fc_line("🌙 Evening (7–8 PM)", e_pred, e_rng)
-        st.caption("Based on last 8 same-weekday sessions")
+        st.caption("Ridge Regression · retrained daily · features: trend, month, week, lag-1, 4-session rolling mean")
 
     st.divider()
 
