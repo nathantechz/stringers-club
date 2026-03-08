@@ -218,18 +218,24 @@ with tab_players:
 # DUES — who owes what right now
 # ════════════════════════════════════════════════════════════
 with tab_dues:
-    # Load all attendance with fee/paid info
-    dues_att = sb.table("attendance").select("player_id, fee_charged, amount_paid").execute().data
-    dues_by_player: dict = {}
+    # Total fees charged per player (from attendance)
+    dues_att = sb.table("attendance").select("player_id, fee_charged").execute().data
+    charged_by_player: dict = {}
     for r in dues_att:
         pid = r["player_id"]
-        due = (r["fee_charged"] or 0) - (r["amount_paid"] or 0)
-        dues_by_player[pid] = dues_by_player.get(pid, 0) + due
+        charged_by_player[pid] = charged_by_player.get(pid, 0) + (r["fee_charged"] or 0)
+
+    # Total amount actually paid per player (from payments table — source of truth)
+    dues_pay = sb.table("payments").select("player_id, amount").execute().data
+    paid_by_player: dict = {}
+    for r in dues_pay:
+        pid = r["player_id"]
+        paid_by_player[pid] = paid_by_player.get(pid, 0) + (r["amount"] or 0)
 
     dues_rows = [
-        {"Player": pid_to_name.get(pid, pid), "Balance Due (₹)": round(due, 2)}
-        for pid, due in dues_by_player.items()
-        if due > 0.005  # ignore floating point near-zero
+        {"Player": pid_to_name.get(pid, pid), "Balance Due (₹)": round(charged - paid_by_player.get(pid, 0), 2)}
+        for pid, charged in charged_by_player.items()
+        if round(charged - paid_by_player.get(pid, 0), 2) > 0.005
     ]
     dues_rows.sort(key=lambda x: x["Balance Due (₹)"], reverse=True)
 
