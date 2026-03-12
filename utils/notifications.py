@@ -1,20 +1,19 @@
-# WhatsApp notifications removed — admin shares screenshots directly via WhatsApp.
-# File kept as placeholder so existing imports don't crash during transition.
+# Notifications placeholder — admin shares updates via WhatsApp screenshots.
 
 
-def format_due_message(player_name: str, balance_due: float) -> str:
+def format_invite_message(player_name: str, session_date: str, slot: str) -> str:
     return (
         f"Hi {player_name}! 🏸\n"
-        f"Your current due at StringerS Badminton Club is ₹{balance_due:.2f}.\n"
-        f"Please clear your dues at the earliest. Thank you!\n"
-        f"— StringerS Club"
+        f"You've been invited to play on {session_date} ({slot}).\n"
+        f"Open the app to accept!\n"
+        f"— Badminton Pro Hub"
     )
 
 
-def format_payment_message(player_name: str, amount_paid: float, balance_due: float) -> str:
+def format_confirmation_message(player_name: str, session_date: str, slot: str) -> str:
     return (
         f"Hi {player_name}! 🏸\n"
-        f"Payment of ₹{amount_paid:.2f} received. Thank you!\n"
-        f"Remaining balance: ₹{balance_due:.2f}.\n"
-        f"— StringerS Club"
+        f"Your spot is confirmed for {session_date} ({slot}).\n"
+        f"See you on court! 💪\n"
+        f"— Badminton Pro Hub"
     )

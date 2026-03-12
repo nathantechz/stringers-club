@@ -1,176 +1,84 @@
-"""
-Page 4 — Manage Players
-Add / edit players: membership, skill level (1-10), profession, work timing.
-"""
-
 import streamlit as st
-import pandas as pd
-from datetime import date
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from utils.supabase_client import get_client
 from utils.styles import inject_mobile_css
-from utils.helpers import skill_label, WORK_TIMINGS, show_back_button
+from utils.helpers import show_back_button, skill_label
+from utils.supabase_client import fetch_all, insert_row, update_row
 
-st.set_page_config(page_title="Manage Players", page_icon="🧑‍🤝‍🧑", layout="centered")
+st.set_page_config(page_title="Manage Players | StringerS", page_icon="👥", layout="wide")
 inject_mobile_css()
+st.markdown("""
+    <style>
+    [data-testid="stAppViewContainer"] { max-width: 500px; margin: auto; }
+    </style>
+    """, unsafe_allow_html=True)
 show_back_button()
-st.markdown("## 🧑‍🤝‍🧑 Manage Players")
 
-sb = get_client()
+st.title("👥 Manage Players")
 
+tab1, tab2 = st.tabs(["➕ Add Player", "📋 All Players"])
 
-# ── Add new player ────────────────────────────────────────────────────────────
-with st.expander("➕ Add new player", expanded=False):
-    with st.form("add_player_form", clear_on_submit=True):
-        st.markdown("**Personal details**")
-        name        = st.text_input("Full name *")
-        phone       = st.text_input("WhatsApp no. (with country code, e.g. 918220583450) *")
-        date_joined = st.date_input("Date joined the club", value=date.today())
+# ═══════════════════════════════════════════════════════════
+# TAB 1 — Add Player
+# ═══════════════════════════════════════════════════════════
+with tab1:
+    with st.form("add_player", clear_on_submit=True):
+        name = st.text_input("Name")
+        phone = st.text_input("Phone")
+        role = st.selectbox("Role", ["player", "coach", "admin"])
+        skill = st.slider("Skill Level", 1, 10, 5)
+        emoji = st.text_input("Avatar Emoji", value="🏸")
 
-        st.markdown("**Membership**")
-        membership_type = st.selectbox("Membership type", ["regular", "monthly"])
-        monthly_fee     = st.number_input("Monthly fee (₹) — monthly members only",
-                                          min_value=0.0, step=100.0, value=0.0)
-
-        st.markdown("**Skill level**")
-        skill_level = st.slider("1 = Complete beginner  →  10 = Pro", 1, 10, 5)
-        st.caption(f"🎾 {skill_label(skill_level)}")
-
-        st.markdown("**Research profile**")
-        profession  = st.text_input("Profession / Job title", placeholder="e.g. Software Engineer, Doctor…")
-        work_timing = st.selectbox("Typical work timing", WORK_TIMINGS)
-
-        add_btn = st.form_submit_button("✅ Add Player")
-
-        if add_btn:
-            if not name.strip() or not phone.strip():
+        if st.form_submit_button("Add Player"):
+            if not name or not phone:
                 st.error("Name and phone are required.")
             else:
-                row = {
-                    "name":            name.strip(),
-                    "phone":           phone.strip(),
-                    "membership_type": membership_type,
-                    "monthly_fee":     monthly_fee if membership_type == "monthly" else None,
-                    "skill_level":     skill_level,
-                    "profession":      profession.strip() or None,
-                    "work_timing":     work_timing,
-                    "date_joined":     str(date_joined),
-                    "is_active":       True,
-                }
-                try:
-                    sb.table("players").insert(row).execute()
-                    st.success(f"✅ {name} added — Skill {skill_level}/10")
+                insert_row("players", {
+                    "name": name.strip(),
+                    "phone": phone.strip(),
+                    "role": role,
+                    "skill_level": skill,
+                    "avatar_emoji": emoji,
+                })
+                st.success(f"{name} added! 🎉")
+                st.rerun()
+
+# ═══════════════════════════════════════════════════════════
+# TAB 2 — View / Edit Players
+# ═══════════════════════════════════════════════════════════
+with tab2:
+    players = fetch_all("players", order="name")
+    if not players:
+        st.info("No players yet. Add one above!")
+    else:
+        for p in players:
+            active_dot = "🟢" if p.get("is_active") else "🔴"
+            st.markdown(f"""
+            <div class="player-card">
+                <div class="player-avatar">{p.get('avatar_emoji', '🏸')}</div>
+                <div class="player-info">
+                    <div class="name">{active_dot} {p['name']}</div>
+                    <div class="sub">{p.get('phone', '')} &nbsp;•&nbsp; {p.get('role', 'player').title()} &nbsp;•&nbsp; {skill_label(p.get('skill_level', 5))}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            with st.expander(f"Edit {p['name']}", expanded=False):
+                new_name = st.text_input("Name", value=p["name"], key=f"n_{p['id']}")
+                new_phone = st.text_input("Phone", value=p.get("phone", ""), key=f"ph_{p['id']}")
+                new_role = st.selectbox("Role", ["player", "coach", "admin"],
+                                        index=["player", "coach", "admin"].index(p.get("role", "player")),
+                                        key=f"r_{p['id']}")
+                new_skill = st.slider("Skill", 1, 10, p.get("skill_level", 5), key=f"sk_{p['id']}")
+                new_emoji = st.text_input("Emoji", value=p.get("avatar_emoji", "🏸"), key=f"em_{p['id']}")
+                new_active = st.checkbox("Active", value=p.get("is_active", True), key=f"act_{p['id']}")
+
+                if st.button("Save Changes", key=f"save_{p['id']}"):
+                    update_row("players", p["id"], {
+                        "name": new_name.strip(),
+                        "phone": new_phone.strip(),
+                        "role": new_role,
+                        "skill_level": new_skill,
+                        "avatar_emoji": new_emoji,
+                        "is_active": new_active,
+                    })
+                    st.success("Updated!")
                     st.rerun()
-                except Exception as e:
-                    if "date_joined" in str(e):
-                        # Column not yet migrated — save without it
-                        row.pop("date_joined")
-                        try:
-                            sb.table("players").insert(row).execute()
-                            st.success(f"✅ {name} added — Skill {skill_level}/10")
-                            st.warning("⚠️ Date joined not saved — run migration_v3.sql in Supabase to enable this field.")
-                            st.rerun()
-                        except Exception as e2:
-                            st.error(f"Error: {e2}")
-                    else:
-                        st.error(f"Error: {e}")
-
-st.divider()
-
-# ── Players table ─────────────────────────────────────────────────────────────
-players = sb.table("players").select("*").order("name").execute().data
-
-if not players:
-    st.info('No players yet. Use "Add new player" above.')
-    st.stop()
-
-st.subheader("All players")
-
-df = pd.DataFrame([
-    {
-        "Name":        p["name"],
-        "Joined":      p.get("date_joined") or "—",
-        "Skill":       f"{p.get('skill_level') or '—'}/10",
-        "Membership":  p["membership_type"].title(),
-        "Profession":  p.get("profession") or "—",
-        "Work Timing": p.get("work_timing") or "—",
-        "Active":      "✅" if p["is_active"] else "❌",
-    }
-    for p in players
-])
-st.dataframe(df, use_container_width=True, hide_index=True)
-
-st.divider()
-
-# ── Edit player ───────────────────────────────────────────────────────────────
-st.subheader("✏️ Edit player profile")
-
-player_names = [p["name"] for p in players]
-edit_name    = st.selectbox("Select player to edit", player_names, key="edit_sel")
-edit_player  = next(p for p in players if p["name"] == edit_name)
-
-cur_skill  = int(edit_player.get("skill_level") or 5)
-cur_timing = edit_player.get("work_timing") or WORK_TIMINGS[-1]
-timing_idx = WORK_TIMINGS.index(cur_timing) if cur_timing in WORK_TIMINGS else len(WORK_TIMINGS) - 1
-
-st.markdown(
-    f"Current skill:&nbsp;<span class='skill-badge'>🎾 {cur_skill}/10 — {skill_label(cur_skill)}</span>",
-    unsafe_allow_html=True,
-)
-st.markdown("")
-
-with st.form("edit_player_form"):
-    st.markdown("**Personal details**")
-    new_name  = st.text_input("Name",  value=edit_player["name"])
-    new_phone = st.text_input("Phone", value=edit_player["phone"])
-    _dj_raw       = edit_player.get("date_joined")
-    _dj_default   = date.fromisoformat(str(_dj_raw)[:10]) if _dj_raw else date.today()
-    new_date_joined = st.date_input("Date joined the club", value=_dj_default)
-
-    st.markdown("**Membership**")
-    new_memtype = st.selectbox(
-        "Membership", ["regular", "monthly"],
-        index=0 if edit_player["membership_type"] == "regular" else 1,
-    )
-    new_monthly = st.number_input("Monthly fee (₹)", min_value=0.0, step=100.0,
-                                  value=float(edit_player.get("monthly_fee") or 0))
-
-    st.markdown("**Skill level**")
-    new_skill = st.slider("1 = Beginner  →  10 = Pro", 1, 10, cur_skill)
-    st.caption(f"🎾 {skill_label(new_skill)}")
-
-    st.markdown("**Research profile**")
-    new_profession  = st.text_input("Profession / Job title",
-                                    value=edit_player.get("profession") or "",
-                                    placeholder="e.g. Software Engineer, Doctor…")
-    new_work_timing = st.selectbox("Typical work timing", WORK_TIMINGS, index=timing_idx)
-
-    new_active = st.checkbox("Active", value=edit_player["is_active"])
-    update_btn = st.form_submit_button("💾 Update Player")
-
-    if update_btn:
-        update_data = {
-            "name":            new_name.strip(),
-            "phone":           new_phone.strip(),
-            "membership_type": new_memtype,
-            "monthly_fee":     new_monthly if new_memtype == "monthly" else None,
-            "skill_level":     new_skill,
-            "profession":      new_profession.strip() or None,
-            "work_timing":     new_work_timing,
-            "date_joined":     str(new_date_joined),
-            "is_active":       new_active,
-        }
-        try:
-            sb.table("players").update(update_data).eq("id", edit_player["id"]).execute()
-        except Exception as e:
-            if "date_joined" in str(e):
-                update_data.pop("date_joined")
-                sb.table("players").update(update_data).eq("id", edit_player["id"]).execute()
-                st.warning("⚠️ Date joined not saved — run migration_v3.sql in Supabase to enable this field.")
-            else:
-                st.error(f"Error: {e}")
-                st.stop()
-        st.success(f"✅ {new_name} updated — Skill {new_skill}/10")
-        st.rerun()

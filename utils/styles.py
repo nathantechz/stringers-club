@@ -1,5 +1,5 @@
 """
-Shared mobile-first CSS — makes the Streamlit app look like an iPhone 16 Plus app.
+Playo-style mobile-first CSS for Badminton Pro Hub.
 Call inject_mobile_css() at the top of every page after set_page_config().
 """
 import streamlit as st
@@ -8,28 +8,26 @@ import streamlit as st
 def inject_mobile_css():
     st.markdown("""
 <style>
-/* ── Google Font ── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* ── Root palette ── */
 :root {
-    --bg:        #fffbf0;
-    --surface:   #fef3c7;
-    --card:      #fffdf8;
-    --border:    #fcd34d;
-    --accent:    #d97706;
-    --accent2:   #ea580c;
-    --accent3:   #7c3aed;
-    --warn:      #b45309;
-    --danger:    #dc2626;
-    --text:      #292524;
-    --text-inv:  #fffbf0;
-    --muted:     #92400e;
-    --dropdown-bg:   #fef3c7;
-    --dropdown-text: #292524;
-    --select-bg:     #fef3c7;
-    --option-hover:  #fde68a;
-    --option-sel:    #fcd34d;
+    --bg:        #f8faf8;
+    --surface:   #eef6ee;
+    --card:      #ffffff;
+    --border:    #d4e8d4;
+    --accent:    #34a853;
+    --accent2:   #1e8e3e;
+    --accent3:   #0d652d;
+    --warn:      #f9ab00;
+    --danger:    #ea4335;
+    --text:      #202124;
+    --text-inv:  #ffffff;
+    --muted:     #5f6368;
+    --dropdown-bg:   #ffffff;
+    --dropdown-text: #202124;
+    --select-bg:     #ffffff;
+    --option-hover:  #e8f5e9;
+    --option-sel:    #c8e6c9;
     --radius:    16px;
     --radius-sm: 10px;
 }

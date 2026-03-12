@@ -1,15 +1,13 @@
-"""Shared helper utilities used across multiple pages."""
+"""Shared helper utilities for the Playo-style Badminton Pro Hub."""
 import streamlit as st
 
 
 def show_back_button():
-    """Renders a small Home button at the top of every inner page."""
     st.page_link("app.py", label="🏠 Home", use_container_width=False)
     st.divider()
 
 
 def skill_label(v: int) -> str:
-    """Human-readable label for a skill level 1-10."""
     v = int(v or 5)
     if v <= 2:  return f"{v} — Beginner"
     if v <= 4:  return f"{v} — Casual"
@@ -19,13 +17,20 @@ def skill_label(v: int) -> str:
     return              f"{v} — Pro 🏆"
 
 
-WORK_TIMINGS = [
-    "9 AM – 6 PM (Office)",
-    "10 AM – 7 PM (Office)",
-    "8 AM – 5 PM (Office)",
-    "Night shift",
-    "Flexible / WFH",
-    "Student",
-    "Business owner",
-    "Other / Not specified",
-]
+STATUS_BADGE = {
+    "pending":   '<span class="badge-pending">⏳ Pending</span>',
+    "confirmed": '<span class="badge-confirmed">✅ Confirmed</span>',
+    "invited":   '<span class="badge-invited">📩 Invited</span>',
+    "rejected":  '<span class="badge-rejected">✖ Rejected</span>',
+}
+
+
+def status_badge(status: str) -> str:
+    return STATUS_BADGE.get(status, status)
+
+
+def require_login():
+    """Ensure a player is selected in session state; show picker if not."""
+    if "current_player" in st.session_state and st.session_state.current_player:
+        return st.session_state.current_player
+    return None

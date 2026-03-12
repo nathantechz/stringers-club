@@ -1,325 +1,118 @@
-"""
-Page 6 — Analytics
-Attendance charts: Day view, Week view, Month view.
-"""
-
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
-from datetime import date, timedelta
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from utils.supabase_client import get_client
 from utils.styles import inject_mobile_css
 from utils.helpers import show_back_button
+from utils.supabase_client import fetch_all, fetch_view
 
-st.set_page_config(page_title="Analytics", page_icon="📊", layout="centered")
+st.set_page_config(page_title="Analytics | StringerS", page_icon="📊", layout="wide")
 inject_mobile_css()
+st.markdown("""
+    <style>
+    [data-testid="stAppViewContainer"] { max-width: 500px; margin: auto; }
+    </style>
+    """, unsafe_allow_html=True)
 show_back_button()
-st.markdown("## 📊 Analytics")
 
-sb = get_client()
+st.title("📊 Analytics")
 
-# ── Load all attendance ───────────────────────────────────────────────────────
-att_raw = sb.table("attendance").select("session_date, session_time, player_id").execute().data
-players_raw = sb.table("players").select("id, name").execute().data
-pid_to_name = {p["id"]: p["name"] for p in players_raw}
+tab1, tab2, tab3 = st.tabs(["📈 Attendance", "💰 Revenue", "👥 Leaderboard"])
 
-if not att_raw:
-    st.info("No attendance data yet.")
-    st.stop()
-
-df = pd.DataFrame(att_raw)
-df["session_date"] = pd.to_datetime(df["session_date"])
-df["player_name"]  = df["player_id"].map(pid_to_name)
-df["week_start"]   = df["session_date"].dt.to_period("W").apply(lambda p: p.start_time)
-df["month"]        = df["session_date"].dt.to_period("M").astype(str)
-df["day_of_week"]  = df["session_date"].dt.day_name()
-
-CHART_BG   = "#ffffff"
-ACCENT     = "#059669"
-ACCENT2    = "#0284c7"
-DANGER     = "#dc2626"
-GRID_COLOR = "#e2e8f0"
-TEXT_COLOR = "#475569"
-
-def _style(fig):
-    fig.update_layout(
-        paper_bgcolor=CHART_BG,
-        plot_bgcolor=CHART_BG,
-        font=dict(color=TEXT_COLOR, size=11),
-        margin=dict(l=8, r=8, t=36, b=8),
-        height=300,
-        xaxis=dict(gridcolor=GRID_COLOR, zeroline=False),
-        yaxis=dict(gridcolor=GRID_COLOR, zeroline=False),
-        legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(color=TEXT_COLOR)),
-    )
-    return fig
-
-
-# ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_day, tab_week, tab_month, tab_players, tab_dues, tab_revenue = st.tabs(
-    ["📅 Day", "📆 Week", "🗓 Month", "👤 Players", "💳 Dues", "💰 Revenue"]
-)
-
-# ════════════════════════════════════════════════════════════
-# DAY VIEW — pick a specific date
-# ════════════════════════════════════════════════════════════
-with tab_day:
-    sel_date = st.date_input("Select date", value=date.today(), key="day_picker")
-    day_df   = df[df["session_date"].dt.date == sel_date]
-
-    if day_df.empty:
-        st.info(f"No attendance on {sel_date.strftime('%d %b %Y')}.")
+# ═══════════════════════════════════════════════════════════
+# TAB 1 — Attendance Trends
+# ═══════════════════════════════════════════════════════════
+with tab1:
+    attendance = fetch_all("attendance", filters={"status": "confirmed"})
+    if not attendance:
+        st.info("No confirmed attendance data yet.")
     else:
-        st.metric("Players attended", len(day_df))
-        session_counts = day_df.groupby("session_time").size().reset_index(name="count")
-        fig = px.bar(
-            session_counts, x="session_time", y="count",
-            color="session_time",
-            color_discrete_sequence=[ACCENT, ACCENT2],
-            labels={"session_time": "Session", "count": "Players"},
-            title=f"Attendance on {sel_date.strftime('%d %b %Y')}",
+        # Join with session dates
+        from utils.supabase_client import get_client
+        data = (
+            get_client().table("attendance")
+            .select("id, session:sessions(date, slot)")
+            .eq("status", "confirmed")
+            .execute().data
         )
-        st.plotly_chart(_style(fig), use_container_width=True)
+        if data:
+            rows = [{"date": d["session"]["date"], "slot": d["session"]["slot"]} for d in data if d.get("session")]
+            df = pd.DataFrame(rows)
+            df["date"] = pd.to_datetime(df["date"])
 
-        # Player list
-        st.markdown("**Players present:**")
-        st.dataframe(
-            day_df[["session_time", "player_name"]].rename(
-                columns={"session_time": "Session", "player_name": "Player"}
-            ).sort_values("Session"),
-            use_container_width=True, hide_index=True,
-        )
+            daily = df.groupby("date").size().reset_index(name="players")
+            st.subheader("Daily Attendance")
+            st.line_chart(daily.set_index("date")["players"])
 
-# ════════════════════════════════════════════════════════════
-# WEEK VIEW — last N weeks of total daily attendance
-# ════════════════════════════════════════════════════════════
-with tab_week:
-    n_weeks = st.select_slider("Show last N weeks", options=[2, 4, 8, 12], value=4)
-    cutoff  = pd.Timestamp(date.today() - timedelta(weeks=n_weeks))
-    week_df = df[df["session_date"] >= cutoff]
+            st.subheader("Morning vs Evening Split")
+            slot_counts = df["slot"].value_counts()
+            st.bar_chart(slot_counts)
 
-    if week_df.empty:
-        st.info("No data in this range.")
+# ═══════════════════════════════════════════════════════════
+# TAB 2 — Revenue
+# ═══════════════════════════════════════════════════════════
+with tab2:
+    payments = fetch_all("payments", order="payment_date")
+    if not payments:
+        st.info("No payment data yet.")
     else:
-        daily = (
-            week_df.groupby(["session_date", "session_time"])
-            .size().reset_index(name="count")
-        )
-        fig = px.bar(
-            daily, x="session_date", y="count",
-            color="session_time",
-            color_discrete_sequence=[ACCENT, ACCENT2],
-            barmode="stack",
-            labels={"session_date": "Date", "count": "Players", "session_time": "Session"},
-            title=f"Daily attendance — last {n_weeks} weeks",
-        )
-        fig.update_xaxes(tickformat="%d %b", tickangle=-30)
-        st.plotly_chart(_style(fig), use_container_width=True)
+        df_pay = pd.DataFrame(payments)
+        df_pay["payment_date"] = pd.to_datetime(df_pay["payment_date"])
+        df_pay["month"] = df_pay["payment_date"].dt.to_period("M").astype(str)
 
-        # Day-of-week heatmap style
-        dow_counts = week_df.groupby("day_of_week").size().reindex(
-            ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
-        ).fillna(0).reset_index(name="count")
-        dow_counts.columns = ["Day", "Total Sessions"]
-        fig2 = px.bar(
-            dow_counts, x="Day", y="Total Sessions",
-            color="Total Sessions",
-            color_continuous_scale=["#dbeafe", ACCENT],
-            title="Which days have most attendance?",
-        )
-        fig2.update_coloraxes(showscale=False)
-        st.plotly_chart(_style(fig2), use_container_width=True)
+        total_collected = df_pay["amount"].sum()
+        st.metric("Total Collected", f"₹{total_collected:,.0f}")
 
-# ════════════════════════════════════════════════════════════
-# MONTH VIEW — aggregate per calendar month
-# ════════════════════════════════════════════════════════════
-with tab_month:
-    monthly = df.groupby("month").size().reset_index(name="sessions_attended")
-    monthly = monthly.sort_values("month")
+        monthly = df_pay.groupby("month")["amount"].sum().reset_index()
+        st.subheader("Monthly Collections")
+        st.bar_chart(monthly.set_index("month")["amount"])
 
-    fig = px.line(
-        monthly, x="month", y="sessions_attended",
-        markers=True,
-        color_discrete_sequence=[ACCENT],
-        labels={"month": "Month", "sessions_attended": "Total attendance"},
-        title="Monthly attendance trend",
-    )
-    fig.update_traces(line_width=2.5, marker_size=8)
-    st.plotly_chart(_style(fig), use_container_width=True)
+    # Expenditures
+    expenditures = fetch_all("expenditures", order="date")
+    if expenditures:
+        df_exp = pd.DataFrame(expenditures)
+        total_exp = df_exp["amount"].sum()
+        st.metric("Total Expenditure", f"₹{total_exp:,.0f}")
 
-    # Unique players per month
-    monthly_unique = df.groupby("month")["player_id"].nunique().reset_index(name="unique_players")
-    monthly_unique = monthly_unique.sort_values("month")
-    fig2 = px.bar(
-        monthly_unique, x="month", y="unique_players",
-        color_discrete_sequence=[ACCENT2],
-        labels={"month": "Month", "unique_players": "Unique players"},
-        title="Unique players per month",
-    )
-    st.plotly_chart(_style(fig2), use_container_width=True)
+        if payments:
+            st.metric("Net Profit", f"₹{total_collected - total_exp:,.0f}")
 
-    # Show breakdown table
-    merged = monthly.merge(monthly_unique, on="month")
-    merged.columns = ["Month", "Total Attendance", "Unique Players"]
-    st.dataframe(merged, use_container_width=True, hide_index=True)
-
-# ════════════════════════════════════════════════════════════
-# PLAYERS — attendance frequency per player
-# ════════════════════════════════════════════════════════════
-with tab_players:
-    # Date range filter
-    col1, col2 = st.columns(2)
-    from_d = col1.date_input("From", value=date(date.today().year, 1, 1), key="p_from")
-    to_d   = col2.date_input("To",   value=date.today(), key="p_to")
-
-    p_df = df[(df["session_date"].dt.date >= from_d) & (df["session_date"].dt.date <= to_d)]
-
-    if p_df.empty:
-        st.info("No data in range.")
+# ═══════════════════════════════════════════════════════════
+# TAB 3 — Leaderboard
+# ═══════════════════════════════════════════════════════════
+with tab3:
+    st.subheader("🏆 Most Active Players")
+    balances = fetch_view("player_balance")
+    if balances:
+        sorted_b = sorted(balances, key=lambda b: b.get("games_played", 0), reverse=True)
+        for i, b in enumerate(sorted_b[:10], 1):
+            medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"#{i}")
+            st.markdown(f"""
+            <div class="player-card">
+                <div class="player-avatar">{medal}</div>
+                <div class="player-info">
+                    <div class="name">{b['name']}</div>
+                    <div class="sub">{b.get('games_played', 0)} games &nbsp;•&nbsp; Skill {b.get('skill_level', '?')}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
     else:
-        player_freq = (
-            p_df.groupby("player_name").size()
-            .reset_index(name="sessions")
-            .sort_values("sessions", ascending=True)
-        )
-        fig = px.bar(
-            player_freq, x="sessions", y="player_name",
-            orientation="h",
-            color="sessions",
-            color_continuous_scale=["#dbeafe", ACCENT],
-            labels={"sessions": "Sessions attended", "player_name": "Player"},
-            title="Attendance frequency by player",
-        )
-        fig.update_coloraxes(showscale=False)
-        fig.update_layout(height=max(250, len(player_freq) * 32))
-        st.plotly_chart(_style(fig), use_container_width=True)
+        st.info("No data yet.")
 
-        # Morning vs evening split per player
-        split = (
-            p_df.groupby(["player_name", "session_time"]).size()
-            .reset_index(name="count")
-        )
-        fig2 = px.bar(
-            split, x="player_name", y="count",
-            color="session_time",
-            color_discrete_sequence=[ACCENT, ACCENT2],
-            barmode="stack",
-            labels={"player_name": "Player", "count": "Sessions", "session_time": "Session"},
-            title="Morning vs Evening split",
-        )
-        fig2.update_xaxes(tickangle=-40)
-        st.plotly_chart(_style(fig2), use_container_width=True)
+    st.divider()
 
-# ════════════════════════════════════════════════════════════
-# DUES — who owes what right now
-# ════════════════════════════════════════════════════════════
-with tab_dues:
-    # Total fees charged per player (from attendance)
-    dues_att = sb.table("attendance").select("player_id, fee_charged").execute().data
-    charged_by_player: dict = {}
-    for r in dues_att:
-        pid = r["player_id"]
-        charged_by_player[pid] = charged_by_player.get(pid, 0) + (r["fee_charged"] or 0)
-
-    # Total amount actually paid per player (from payments table — source of truth)
-    dues_pay = sb.table("payments").select("player_id, amount").execute().data
-    paid_by_player: dict = {}
-    for r in dues_pay:
-        pid = r["player_id"]
-        paid_by_player[pid] = paid_by_player.get(pid, 0) + (r["amount"] or 0)
-
-    dues_rows = [
-        {"Player": pid_to_name.get(pid, pid), "Balance Due (₹)": round(charged - paid_by_player.get(pid, 0), 2)}
-        for pid, charged in charged_by_player.items()
-        if round(charged - paid_by_player.get(pid, 0), 2) > 0.005
-    ]
-    dues_rows.sort(key=lambda x: x["Balance Due (₹)"], reverse=True)
-
-    if not dues_rows:
-        st.success("✅ All players are clear — no outstanding dues!")
-    else:
-        total_outstanding = sum(r["Balance Due (₹)"] for r in dues_rows)
-        st.metric("Total outstanding", f"₹{total_outstanding:,.0f}")
-        st.markdown(f"**{len(dues_rows)} player(s) have pending dues:**")
-
-        dues_df = pd.DataFrame(dues_rows)
-        fig = px.bar(
-            dues_df.sort_values("Balance Due (₹)"),
-            x="Balance Due (₹)", y="Player",
-            orientation="h",
-            color="Balance Due (₹)",
-            color_continuous_scale=[ACCENT, DANGER],
-            title="Outstanding dues by player",
-        )
-        fig.update_coloraxes(showscale=False)
-        fig.update_layout(height=max(250, len(dues_df) * 36))
-        st.plotly_chart(_style(fig), use_container_width=True)
-        st.dataframe(dues_df, use_container_width=True, hide_index=True)
-
-# ════════════════════════════════════════════════════════════
-# REVENUE — payments collected over time
-# ════════════════════════════════════════════════════════════
-with tab_revenue:
-    pay_raw = sb.table("payments").select("player_id, amount, payment_date").execute().data
-
-    if not pay_raw:
-        st.info("No payment records yet.")
-    else:
-        pay_df = pd.DataFrame(pay_raw)
-        pay_df["payment_date"] = pd.to_datetime(pay_df["payment_date"])
-        pay_df["month"] = pay_df["payment_date"].dt.to_period("M").astype(str)
-        pay_df["amount"] = pay_df["amount"].astype(float)
-        pay_df["player_name"] = pay_df["player_id"].map(pid_to_name)
-
-        # Total revenue collected (all time)
-        total_rev = pay_df["amount"].sum()
-        num_payments = len(pay_df)
-        col_a, col_b = st.columns(2)
-        col_a.metric("Total Revenue Collected", f"₹{total_rev:,.0f}")
-        col_b.metric("Number of Payments", num_payments)
-
-        st.markdown("---")
-
-        # Monthly revenue bar chart
-        monthly_rev = pay_df.groupby("month")["amount"].sum().reset_index(name="revenue")
-        monthly_rev = monthly_rev.sort_values("month")
-        fig_rev = px.bar(
-            monthly_rev, x="month", y="revenue",
-            color_discrete_sequence=[ACCENT],
-            labels={"month": "Month", "revenue": "Revenue (₹)"},
-            title="Monthly Revenue Collected",
-            text="revenue",
-        )
-        fig_rev.update_traces(texttemplate="₹%{text:,.0f}", textposition="outside")
-        st.plotly_chart(_style(fig_rev), use_container_width=True)
-
-        # Revenue by player
-        player_rev = (
-            pay_df.groupby("player_name")["amount"]
-            .sum().reset_index(name="revenue")
-            .sort_values("revenue", ascending=True)
-        )
-        fig_p = px.bar(
-            player_rev, x="revenue", y="player_name",
-            orientation="h",
-            color="revenue",
-            color_continuous_scale=["#dbeafe", ACCENT],
-            labels={"revenue": "Amount Paid (₹)", "player_name": "Player"},
-            title="Revenue by Player",
-            text="revenue",
-        )
-        fig_p.update_traces(texttemplate="₹%{text:,.0f}", textposition="outside")
-        fig_p.update_coloraxes(showscale=False)
-        fig_p.update_layout(height=max(250, len(player_rev) * 36))
-        st.plotly_chart(_style(fig_p), use_container_width=True)
-
-        # Detailed table
-        st.markdown("**Monthly Revenue Details**")
-        detail = pay_df.groupby(["month", "player_name"])["amount"].sum().reset_index()
-        detail.columns = ["Month", "Player", "Amount Paid (₹)"]
-        detail = detail.sort_values(["Month", "Amount Paid (₹)"], ascending=[True, False])
-        st.dataframe(detail, use_container_width=True, hide_index=True)
+    st.subheader("📊 Outstanding Dues")
+    if balances:
+        with_dues = [b for b in balances if b.get("balance_due", 0) > 0]
+        with_dues.sort(key=lambda b: b["balance_due"], reverse=True)
+        if with_dues:
+            for b in with_dues:
+                st.markdown(f"""
+                <div class="player-card">
+                    <div class="player-avatar">💳</div>
+                    <div class="player-info">
+                        <div class="name">{b['name']}</div>
+                        <div class="sub">Due: <span class="badge-due">₹{b['balance_due']:.0f}</span></div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.success("All dues cleared! 🎉")
