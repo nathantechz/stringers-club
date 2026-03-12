@@ -2,43 +2,36 @@
 import streamlit as st
 
 # ── Bottom navigation items ──────────────────────────────
-# (label, material icon name, page path)
+# (label, icon for st.page_link, page path)
 _PLAYER_NAV = [
-    ("Home",     "home",          "app.py"),
-    ("Games",    "sports_tennis", "pages/1_Join_Games.py"),
-    ("Profile",  "person",        "pages/3_My_Profile.py"),
-    ("Payments", "payments",      "pages/5_Payments.py"),
-    ("Stats",    "analytics",     "pages/6_Analytics.py"),
+    ("Home",     ":material/home:",          "app.py"),
+    ("Games",    ":material/sports_tennis:", "pages/1_Join_Games.py"),
+    ("Profile",  ":material/person:",        "pages/3_My_Profile.py"),
+    ("Payments", ":material/payments:",      "pages/5_Payments.py"),
+    ("Stats",    ":material/analytics:",     "pages/6_Analytics.py"),
 ]
 
 _COACH_NAV = [
-    ("Home",      "home",          "app.py"),
-    ("Games",     "sports_tennis", "pages/1_Join_Games.py"),
-    ("Dashboard", "shield_person", "pages/2_Coach_Dashboard.py"),
-    ("Players",   "group",         "pages/4_Manage_Players.py"),
-    ("Stats",     "analytics",     "pages/6_Analytics.py"),
+    ("Home",      ":material/home:",          "app.py"),
+    ("Games",     ":material/sports_tennis:", "pages/1_Join_Games.py"),
+    ("Dashboard", ":material/shield_person:", "pages/2_Coach_Dashboard.py"),
+    ("Players",   ":material/group:",         "pages/4_Manage_Players.py"),
+    ("Stats",     ":material/analytics:",     "pages/6_Analytics.py"),
 ]
 
 
 def bottom_nav(current_page: str = ""):
-    """Render a fixed bottom navigation bar. `current_page` is the page filename to highlight."""
+    """Render a fixed bottom navigation bar using st.page_link for proper Streamlit navigation."""
     player = st.session_state.get("authenticated_player") or st.session_state.get("current_player")
     is_coach = player and player.get("role") in ("coach", "admin")
     items = _COACH_NAV if is_coach else _PLAYER_NAV
 
-    links = ""
-    for label, icon, path in items:
-        active = "active" if current_page and current_page in path else ""
-        links += (
-            f'<a href="/{path}" target="_self" class="{active}">'
-            f'<span class="material-symbols-rounded">{icon}</span>'
-            f'<span class="nav-label">{label}</span>'
-            f'</a>'
-        )
-    st.markdown(
-        f'<div class="bottom-nav"><div class="bottom-nav-inner">{links}</div></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div style="height:80px;"></div>', unsafe_allow_html=True)  # spacer
+
+    cols = st.columns(len(items))
+    for col, (label, icon, path) in zip(cols, items):
+        with col:
+            st.page_link(path, label=label, icon=icon, use_container_width=True)
 
 
 def show_back_button():
