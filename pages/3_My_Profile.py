@@ -46,6 +46,37 @@ if my_bal:
     if due > 0:
         st.markdown('<span class="badge-due">💳 Payment Due</span>', unsafe_allow_html=True)
 
+# ── Skill Radar Chart ──
+import plotly.graph_objects as go
+
+ratings_data = fetch_all("ratings", filters={"player_id": current["id"]})
+if ratings_data:
+    r = ratings_data[0]
+    categories = ["Footwork", "Stamina", "Smash Power", "Net Play"]
+    values = [
+        r.get("footwork", 5),
+        r.get("stamina", 5),
+        r.get("smash_power", 5),
+        r.get("net_play", 5),
+    ]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=values + [values[0]],
+        theta=categories + [categories[0]],
+        fill="toself",
+        line_color="#00c853",
+    ))
+    fig.update_layout(
+        polar=dict(radialaxis=dict(visible=True, range=[0, 10])),
+        showlegend=False,
+        margin=dict(l=40, r=40, t=20, b=20),
+        height=300,
+    )
+
+    st.subheader("🎯 Skill Analysis")
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
 st.divider()
 
 # ── Session History ──

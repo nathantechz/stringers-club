@@ -38,6 +38,23 @@ if current:
 else:
     st.info("Select your profile from the sidebar to join games & view your stats.")
 
+# ── Action Required Alerts ──
+if current:
+    if current.get("role") in ["coach", "admin"]:
+        _pending_count = len(fetch_all("attendance", filters={"status": "pending"}))
+        if _pending_count > 0:
+            st.warning(f"🔔 You have **{_pending_count}** new join request(s) to review!")
+            if st.button("Go to Dashboard"):
+                st.switch_page("pages/2_Coach_Dashboard.py")
+    else:
+        _invite_count = len(fetch_all(
+            "attendance", filters={"player_id": current["id"], "status": "invited"}
+        ))
+        if _invite_count > 0:
+            st.info(f"📩 Coach has sent you **{_invite_count}** game invitation(s)!")
+            if st.button("View Invites"):
+                st.switch_page("pages/1_Join_Games.py")
+
 st.divider()
 
 # ── Upcoming sessions — card view ──
