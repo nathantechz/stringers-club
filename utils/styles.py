@@ -5,14 +5,9 @@ Call inject_mobile_css() at the top of every page after set_page_config().
 import streamlit as st
 
 
-# ── Google Material Symbols import (rendered via CSS) ─────
-_MATERIAL_ICONS_LINK = "https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"
-
-
 def inject_mobile_css():
-    st.markdown(
-        '<link rel="stylesheet" href="' + _MATERIAL_ICONS_LINK + '" />\n'
-        """<style>
+    st.markdown("""<style>
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
