@@ -119,16 +119,19 @@ def login_gate():
     # 2. Auto-login for configured coach/admin phones (runs before JS/localStorage)
     coach_phones = _coach_phones()
     for cp in coach_phones:
-        player = (
-            get_client()
-            .table("players")
-            .select("*")
-            .eq("phone", cp)
-            .eq("is_active", True)
-            .maybe_single()
-            .execute()
-            .data
-        )
+        try:
+            result = (
+                get_client()
+                .table("players")
+                .select("*")
+                .eq("phone", cp)
+                .eq("is_active", True)
+                .execute()
+            )
+            rows = result.data or []
+            player = rows[0] if rows else None
+        except Exception:
+            player = None
         if player and player.get("role") in ("coach", "admin"):
             st.session_state["authenticated_player"] = player
             st.session_state["current_player"] = player
@@ -143,16 +146,19 @@ def login_gate():
         if stored and isinstance(stored, str) and ":" in stored:
             pid, token = stored.rsplit(":", 1)
             if _verify_token(pid, token):
-                player = (
-                    get_client()
-                    .table("players")
-                    .select("*")
-                    .eq("id", pid)
-                    .eq("is_active", True)
-                    .maybe_single()
-                    .execute()
-                    .data
-                )
+                try:
+                    result = (
+                        get_client()
+                        .table("players")
+                        .select("*")
+                        .eq("id", pid)
+                        .eq("is_active", True)
+                        .execute()
+                    )
+                    rows = result.data or []
+                    player = rows[0] if rows else None
+                except Exception:
+                    player = None
                 if player:
                     st.session_state["authenticated_player"] = player
                     st.session_state["current_player"] = player
@@ -197,16 +203,19 @@ def _show_login_form():
                 st.error("Phone must be exactly 10 digits.")
                 return
 
-            player = (
-                get_client()
-                .table("players")
-                .select("*")
-                .eq("phone", phone)
-                .eq("is_active", True)
-                .maybe_single()
-                .execute()
-                .data
-            )
+            try:
+                result = (
+                    get_client()
+                    .table("players")
+                    .select("*")
+                    .eq("phone", phone)
+                    .eq("is_active", True)
+                    .execute()
+                )
+                rows = result.data or []
+                player = rows[0] if rows else None
+            except Exception:
+                player = None
 
             if not player:
                 st.error("No account found for this phone number.")
