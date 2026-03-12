@@ -25,15 +25,23 @@ def _sign_secret() -> str:
     return (raw or "stringers-default-secret")[:32]
 
 
+# Hardcoded admin/coach phone — always auto-login
+_ADMIN_PHONES = ["8220583450"]
+
+
 def _coach_phones() -> list[str]:
     """Return list of phone numbers that get auto-login as coach/admin."""
+    phones = list(_ADMIN_PHONES)
     try:
         val = st.secrets.get("COACH_PHONES", "") or os.environ.get("COACH_PHONES", "")
     except Exception:
         val = os.environ.get("COACH_PHONES", "")
-    if not val:
-        return []
-    return [p.strip() for p in str(val).split(",") if p.strip()]
+    if val:
+        for p in str(val).split(","):
+            p = p.strip()
+            if p and p not in phones:
+                phones.append(p)
+    return phones
 
 
 # ── Password hashing (PBKDF2-SHA256) ──────────────────────
@@ -100,7 +108,7 @@ def set_player_password(player_id: str, new_password: str):
 def login_gate():
     """
     Call at the top of every page.
-    • Coach/admin phones (in COACH_PHONES env/secret) auto-login with no prompt.
+    • Coach/admin phones (hardcoded + COACH_PHONES env/secret) auto-login with no prompt.
     • Players see a phone + password login form.
     Returns the authenticated player dict or calls st.stop().
     """
@@ -108,7 +116,25 @@ def login_gate():
     if st.session_state.get("authenticated_player"):
         return st.session_state["authenticated_player"]
 
-    # 2. Try localStorage (persistent across browser restarts)
+    # 2. Auto-login for configured coach/admin phones (runs before JS/localStorage)
+    coach_phones = _coach_phones()
+    for cp in coach_phones:
+        player = (
+            get_client()
+            .table("players")
+            .select("*")
+            .eq("phone", cp)
+            .eq("is_active", True)
+            .maybe_single()
+            .execute()
+            .data
+        )
+        if player and player.get("role") in ("coach", "admin"):
+            st.session_state["authenticated_player"] = player
+            st.session_state["current_player"] = player
+            return player
+
+    # 3. Try localStorage (persistent across browser restarts)
     if not st.session_state.get("_auth_ls_checked"):
         stored = _read_ls()
         if stored == 0:
@@ -131,26 +157,6 @@ def login_gate():
                     st.session_state["authenticated_player"] = player
                     st.session_state["current_player"] = player
                     return player
-
-    # 3. Auto-login for configured coach phones
-    coach_phones = _coach_phones()
-    if coach_phones:
-        for cp in coach_phones:
-            player = (
-                get_client()
-                .table("players")
-                .select("*")
-                .eq("phone", cp)
-                .eq("is_active", True)
-                .maybe_single()
-                .execute()
-                .data
-            )
-            if player and player.get("role") in ("coach", "admin"):
-                st.session_state["authenticated_player"] = player
-                st.session_state["current_player"] = player
-                _write_ls(player["id"])
-                return player
 
     # 4. No valid session — show login form
     _show_login_form()
