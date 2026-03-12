@@ -49,32 +49,39 @@ if my_bal:
 # ── Skill Radar Chart ──
 import plotly.graph_objects as go
 
+st.divider()
+st.subheader("🎯 Skill Analysis")
+
 ratings_data = fetch_all("ratings", filters={"player_id": current["id"]})
-if ratings_data:
-    r = ratings_data[0]
+if not ratings_data:
+    st.info("Coach hasn't rated your skills yet. Keep playing!")
+else:
+    latest = ratings_data[-1]
     categories = ["Footwork", "Stamina", "Smash Power", "Net Play"]
     values = [
-        r.get("footwork", 5),
-        r.get("stamina", 5),
-        r.get("smash_power", 5),
-        r.get("net_play", 5),
+        latest.get("footwork", 5),
+        latest.get("stamina", 5),
+        latest.get("smash_power", 5),
+        latest.get("net_play", 5),
     ]
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatterpolar(
+    fig = go.Figure(data=go.Scatterpolar(
         r=values + [values[0]],
         theta=categories + [categories[0]],
         fill="toself",
-        line_color="#00c853",
+        fillcolor="rgba(0, 200, 83, 0.3)",
+        line=dict(color="#00c853", width=2),
     ))
     fig.update_layout(
-        polar=dict(radialaxis=dict(visible=True, range=[0, 10])),
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 10], tickfont_size=10),
+            angularaxis=dict(tickfont_size=12, rotation=90, direction="clockwise"),
+        ),
         showlegend=False,
         margin=dict(l=40, r=40, t=20, b=20),
-        height=300,
+        height=350,
     )
 
-    st.subheader("🎯 Skill Analysis")
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 st.divider()

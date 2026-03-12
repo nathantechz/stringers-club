@@ -55,6 +55,12 @@ if current:
             if st.button("View Invites"):
                 st.switch_page("pages/1_Join_Games.py")
 
+        # Alert if they have unpaid confirmed games
+        _balances = fetch_view("player_balance")
+        _my_bal = next((b for b in _balances if b["id"] == current["id"]), None)
+        if _my_bal and _my_bal.get("balance_due", 0) > 0:
+            st.error(f"💳 Payment Due: ₹{_my_bal['balance_due']:.0f}")
+
 st.divider()
 
 # ── Upcoming sessions — card view ──
