@@ -1,17 +1,14 @@
 import streamlit as st
 import pandas as pd
 from utils.styles import inject_mobile_css
-from utils.helpers import show_back_button
+from utils.helpers import bottom_nav
+from utils.auth import login_gate
 from utils.supabase_client import fetch_all, insert_row, delete_row
 
-st.set_page_config(page_title="Expenditure | StringerS", page_icon="📒", layout="wide")
+st.set_page_config(page_title="Expenditure | StringerS", page_icon="📒", layout="wide", initial_sidebar_state="collapsed")
 inject_mobile_css()
-st.markdown("""
-    <style>
-    [data-testid="stAppViewContainer"] { max-width: 500px; margin: auto; }
-    </style>
-    """, unsafe_allow_html=True)
-show_back_button()
+
+current = login_gate()
 
 st.title("📒 Expenditure Tracker")
 
@@ -75,3 +72,5 @@ with tab2:
             if st.button("🗑️ Delete", key=f"del_{exp['id']}"):
                 delete_row("expenditures", exp["id"])
                 st.rerun()
+
+bottom_nav("7_Expenditure.py")

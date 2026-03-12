@@ -1,13 +1,18 @@
 """
-Playo-style mobile-first CSS for Badminton Pro Hub.
+Playo-style mobile-first CSS for StringerS Badminton Academy.
 Call inject_mobile_css() at the top of every page after set_page_config().
 """
 import streamlit as st
 
 
+# ── Google Material Symbols import (rendered via CSS) ─────
+_MATERIAL_ICONS_LINK = "https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"
+
+
 def inject_mobile_css():
-    st.markdown("""
-<style>
+    st.markdown(
+        '<link rel="stylesheet" href="' + _MATERIAL_ICONS_LINK + '" />\n'
+        """<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
@@ -72,79 +77,102 @@ div[class*="block-container"] {
     color: var(--text) !important;
 }
 
-/* ── Centre + constrain to iPhone 16 Plus width (430 px) desktop frame ── */
+/* ── Centre + constrain — responsive: wider on desktop, narrow on mobile ── */
 [data-testid="stMain"] > div:first-child,
 [data-testid="stMainBlockContainer"] {
-    max-width: 460px !important;
+    max-width: 700px !important;
     margin: 0 auto !important;
-    padding: 56px 16px 80px 16px !important;
+    padding: 16px 24px 100px 24px !important;
+}
+@media (max-width: 768px) {
+    [data-testid="stMain"] > div:first-child,
+    [data-testid="stMainBlockContainer"] {
+        max-width: 500px !important;
+        padding: 16px 16px 100px 16px !important;
+    }
 }
 
 /* ── Hide default streamlit chrome ── */
 #MainMenu, footer,
 [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
 
-/* Keep header visible but light — contains sidebar toggle */
-[data-testid="stHeader"] {
-    background: var(--bg) !important;
-    border-bottom: 1px solid var(--border) !important;
-    z-index: 999 !important;
+/* ── Hide sidebar completely ── */
+[data-testid="stSidebar"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarNavItems"],
+section[data-testid="stSidebar"],
+[data-testid="stSidebarCollapseButton"] {
+    display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden !important;
 }
 
-/* Hide only the deploy/share/github icon buttons in header, keep sidebar toggle */
-[data-testid="stHeader"] [data-testid="stActionButtonLabel"],
-[data-testid="stHeader"] [data-testid^="stActionButton"]:not([data-testid="stSidebarCollapsedControl"]) {
+/* Hide header — no sidebar toggle needed anymore */
+[data-testid="stHeader"] {
     display: none !important;
 }
 
-/* ── Sidebar toggle — always visible, clean style ── */
-[data-testid="stSidebarCollapsedControl"] {
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    z-index: 1000 !important;
+/* ── Fixed Bottom Nav Bar (Playo-style) ── */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: #ffffff;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 0 8px;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
 }
-[data-testid="stSidebarCollapsedControl"] button,
-[data-testid="stSidebarCollapseButton"] button {
-    background: var(--card) !important;
-    border: 1.5px solid var(--accent) !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.10) !important;
-    border-radius: 10px !important;
-    width: 36px !important;
-    height: 36px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+.bottom-nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    width: 100%;
+    max-width: 500px;
 }
-[data-testid="stSidebarCollapsedControl"] svg,
-[data-testid="stSidebarCollapseButton"] svg {
-    fill: var(--accent) !important;
-    color: var(--accent) !important;
-    width: 20px !important;
-    height: 20px !important;
+.bottom-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none !important;
+    gap: 2px;
+    flex: 1;
+    padding: 6px 0;
+    border-radius: 12px;
+    transition: background 0.15s;
 }
-
-/* ── Sidebar → slide-in drawer feel ── */
-[data-testid="stSidebar"] {
-    background: var(--surface) !important;
-    border-right: 2px solid var(--accent3) !important;
+.bottom-nav a:hover {
+    background: rgba(52,168,83,0.08);
 }
-[data-testid="stSidebar"] * { color: var(--text) !important; }
-[data-testid="stSidebarNavItems"] a {
-    border-radius: var(--radius-sm) !important;
-    padding: 10px 14px !important;
-    margin: 2px 0 !important;
-    font-weight: 600 !important;
-    transition: background 0.15s, color 0.15s;
+.bottom-nav a .material-symbols-rounded {
+    font-size: 26px;
+    color: #5f6368;
+    transition: color 0.15s;
 }
-[data-testid="stSidebarNavItems"] a:hover {
-    background: rgba(167,139,250,0.12) !important;
-    color: var(--accent3) !important;
+.bottom-nav a.active .material-symbols-rounded {
+    color: #34a853;
 }
-[data-testid="stSidebarNavItems"] a[aria-selected="true"] {
-    background: rgba(52,211,153,0.12) !important;
-    color: var(--accent) !important;
-    border-left: 3px solid var(--accent) !important;
+.bottom-nav a .nav-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #5f6368;
+    letter-spacing: 0.2px;
+    transition: color 0.15s;
+}
+.bottom-nav a.active .nav-label {
+    color: #34a853;
+    font-weight: 700;
+}
+.bottom-nav a.active {
+    background: rgba(52,168,83,0.10);
 }
 
 /* ── Typography ── */

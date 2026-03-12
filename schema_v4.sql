@@ -20,6 +20,7 @@ CREATE TABLE players (
     id            UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name          TEXT NOT NULL,
     phone         TEXT NOT NULL UNIQUE,
+    password_hash TEXT,                     -- PBKDF2 hash set by coach
     role          TEXT NOT NULL DEFAULT 'player'
                       CHECK (role IN ('player', 'coach', 'admin')),
     skill_level   INTEGER DEFAULT 5 CHECK (skill_level BETWEEN 1 AND 10),

@@ -1,15 +1,14 @@
 import streamlit as st
 from utils.styles import inject_mobile_css
-from utils.helpers import show_back_button, skill_label, status_badge, require_login
+from utils.helpers import bottom_nav, skill_label, status_badge
+from utils.auth import login_gate
 from utils.supabase_client import fetch_all, fetch_view
 
-st.set_page_config(page_title="My Profile | StringerS", page_icon="📈", layout="wide")
+st.set_page_config(page_title="My Profile | StringerS", page_icon="📈", layout="wide", initial_sidebar_state="collapsed")
 inject_mobile_css()
-st.markdown("""
-    <style>
-    [data-testid="stAppViewContainer"] { max-width: 500px; margin: auto; }
-    </style>
-    """, unsafe_allow_html=True)
+
+current = login_gate()
+
 show_back_button()
 
 st.title("📈 My Profile")
@@ -175,3 +174,5 @@ else:
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+bottom_nav("3_My_Profile.py")

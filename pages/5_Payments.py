@@ -1,18 +1,17 @@
 import streamlit as st
 from utils.styles import inject_mobile_css
-from utils.helpers import show_back_button
+from utils.helpers import bottom_nav
+from utils.auth import login_gate
 from utils.supabase_client import (
     fetch_all, get_client, record_payment_with_audit,
 )
 
-st.set_page_config(page_title="Payments | StringerS", page_icon="💳", layout="wide")
+st.set_page_config(page_title="Payments | StringerS", page_icon="💳", layout="wide", initial_sidebar_state="collapsed")
 inject_mobile_css()
-st.markdown("""
-    <style>
-    [data-testid="stAppViewContainer"] { max-width: 500px; margin: auto; }
-    </style>
-    """, unsafe_allow_html=True)
-show_back_button()
+
+current = login_gate()
+
+current = login_gate()
 
 st.title("💳 Record Payment")
 
@@ -148,3 +147,5 @@ with tab3:
                 f"</div></div>",
                 unsafe_allow_html=True,
             )
+
+bottom_nav("5_Payments.py")

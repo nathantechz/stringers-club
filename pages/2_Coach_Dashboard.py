@@ -1,26 +1,23 @@
 import streamlit as st
 from datetime import date, timedelta
 from utils.styles import inject_mobile_css
-from utils.helpers import show_back_button, status_badge
+from utils.helpers import bottom_nav, status_badge
+from utils.auth import login_gate, set_player_password
 from utils.supabase_client import (
     fetch_all, fetch_view, insert_row, update_row, delete_row, bulk_update,
     confirm_request, reject_request, send_invite, bulk_confirm, upsert_row,
     set_player_fee, VENUES,
 )
 
-st.set_page_config(page_title="Coach Dashboard | StringerS", page_icon="👨‍🏫", layout="wide")
+st.set_page_config(page_title="Coach Dashboard | StringerS", page_icon="👨‍🏫", layout="wide", initial_sidebar_state="collapsed")
 inject_mobile_css()
-st.markdown("""
-    <style>
-    [data-testid="stAppViewContainer"] { max-width: 500px; margin: auto; }
-    </style>
-    """, unsafe_allow_html=True)
-show_back_button()
+
+current = login_gate()
 
 st.title("👨‍🏫 Coach Dashboard")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📋 Requests", "📩 Invites", "➕ Session", "💰 Fees", "⭐ Rate Players",
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    "📋 Requests", "📩 Invites", "➕ Session", "💰 Fees", "⭐ Rate Players", "🔐 Passwords",
 ])
 
 # ═══════════════════════════════════════════════════════════
@@ -350,3 +347,34 @@ with tab5:
                 })
                 st.success(f"Rating saved for {sel_p['name']}!")
                 st.rerun()
+
+# ═══════════════════════════════════════════════════════════
+# TAB 6 — Passwords
+# ═══════════════════════════════════════════════════════════
+with tab6:
+    st.subheader("🔐 Set Player Password")
+    pwd_players = fetch_all("players", filters={"is_active": True}, order="name")
+    if not pwd_players:
+        st.info("No active players.")
+    else:
+        sel_pwd_p = st.selectbox(
+            "Select Player", pwd_players,
+            format_func=lambda p: f"{p.get('avatar_emoji', '🏸')} {p['name']}",
+            key="pwd_player",
+        )
+        has_pwd = bool(sel_pwd_p.get("password_hash"))
+        st.caption(f"Password status: {'✅ Set' if has_pwd else '❌ Not set'}")
+        with st.form("set_password_form"):
+            new_pwd = st.text_input("New Password", type="password")
+            confirm_pwd = st.text_input("Confirm Password", type="password")
+            if st.form_submit_button("Set Password"):
+                if not new_pwd or len(new_pwd) < 4:
+                    st.error("Password must be at least 4 characters.")
+                elif new_pwd != confirm_pwd:
+                    st.error("Passwords do not match.")
+                else:
+                    set_player_password(sel_pwd_p["id"], new_pwd)
+                    st.success(f"Password set for {sel_pwd_p['name']}!")
+                    st.rerun()
+
+bottom_nav("2_Coach_Dashboard.py")

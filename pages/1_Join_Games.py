@@ -1,23 +1,15 @@
 import streamlit as st
 from utils.styles import inject_mobile_css
-from utils.helpers import show_back_button, status_badge, require_login
+from utils.helpers import bottom_nav, status_badge
+from utils.auth import login_gate
 from utils.supabase_client import fetch_all, fetch_view, insert_row, update_row, record_payment_with_audit
 
-st.set_page_config(page_title="Join Games | StringerS", page_icon="🏸", layout="wide")
+st.set_page_config(page_title="Join Games | StringerS", page_icon="🏸", layout="wide", initial_sidebar_state="collapsed")
 inject_mobile_css()
-st.markdown("""
-    <style>
-    [data-testid="stAppViewContainer"] { max-width: 500px; margin: auto; }
-    </style>
-    """, unsafe_allow_html=True)
-show_back_button()
+
+current = login_gate()
 
 st.title("🏸 Available Sessions")
-
-current = require_login()
-if not current:
-    st.warning("Select your profile from the sidebar on the Home page first.")
-    st.stop()
 
 # ── Fetch sessions with slot info ──
 sessions = fetch_view("session_slots")
@@ -120,3 +112,5 @@ for s in upcoming:
             st.warning("Session is full.")
 
     st.markdown("---")
+
+bottom_nav("1_Join_Games.py")
