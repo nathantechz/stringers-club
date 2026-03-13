@@ -564,10 +564,12 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
 }
 
 /* ── Fixed bottom row for nav rendered via st.page_link ── */
-[data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) {
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
+[data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) .bottom-nav-sentinel {
+    display: none !important;
+}
+
+[data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) [data-testid="stHorizontalBlock"] {
+    position: sticky !important;
     bottom: 0 !important;
     z-index: 9999 !important;
     margin: 0 !important;
@@ -575,13 +577,6 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
     background: #ffffff !important;
     border-top: 1px solid #e0e0e0 !important;
     box-shadow: 0 -2px 12px rgba(0,0,0,0.08) !important;
-}
-
-[data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) .bottom-nav-sentinel {
-    display: none !important;
-}
-
-[data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) [data-testid="stHorizontalBlock"] {
     display: flex !important;
     flex-wrap: nowrap !important;
     gap: 6px !important;

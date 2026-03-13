@@ -16,6 +16,7 @@ sessions = fetch_view("session_slots")
 
 if not sessions:
     st.info("No sessions available right now. Check back later!")
+    bottom_nav("1_Join_Games.py")
     st.stop()
 
 from datetime import date as dt_date, datetime
@@ -25,6 +26,7 @@ upcoming.sort(key=lambda s: (s["date"], s["slot"]))
 
 if not upcoming:
     st.info("No upcoming sessions. Ask your coach to create one!")
+    bottom_nav("1_Join_Games.py")
     st.stop()
 
 # ── Fetch current player's attendance records to know existing status ──
