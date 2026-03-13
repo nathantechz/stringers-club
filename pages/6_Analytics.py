@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from utils.styles import inject_mobile_css
-from utils.helpers import bottom_nav
+from utils.helpers import bottom_nav, is_coach_view
 from utils.auth import login_gate
 from utils.supabase_client import fetch_all, fetch_view
 
@@ -9,6 +9,11 @@ st.set_page_config(page_title="Analytics | StringerS", page_icon="📊", layout=
 inject_mobile_css()
 
 current = login_gate()
+
+if not is_coach_view():
+    st.warning("Coach access only.")
+    bottom_nav("6_Analytics.py")
+    st.stop()
 
 st.title("📊 Analytics")
 
