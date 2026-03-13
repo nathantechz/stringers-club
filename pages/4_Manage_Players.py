@@ -9,6 +9,11 @@ inject_mobile_css()
 
 current = login_gate()
 
+if current.get("role") not in ("coach", "admin"):
+    st.warning("Coach access only.")
+    bottom_nav("4_Manage_Players.py")
+    st.stop()
+
 st.title("👥 Manage Players")
 
 tab1, tab2 = st.tabs(["➕ Add Player", "📋 All Players"])

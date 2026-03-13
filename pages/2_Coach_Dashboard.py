@@ -14,6 +14,11 @@ inject_mobile_css()
 
 current = login_gate()
 
+if current.get("role") not in ("coach", "admin"):
+    st.warning("Coach access only.")
+    bottom_nav("2_Coach_Dashboard.py")
+    st.stop()
+
 st.title("👨‍🏫 Coach Dashboard")
 
 

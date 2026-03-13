@@ -6,7 +6,7 @@ import streamlit as st
 _PLAYER_NAV = [
     ("Home", ":material/home:", "app.py"),
     ("Games", ":material/sports_tennis:", "pages/1_Join_Games.py"),
-    ("Profile", ":material/person:", "pages/3_My_Profile.py"),
+    ("Activities", ":material/event_note:", "pages/3_My_Profile.py"),
     ("Payments", ":material/payments:", "pages/5_Payments.py"),
     ("Stats", ":material/analytics:", "pages/6_Analytics.py"),
 ]
