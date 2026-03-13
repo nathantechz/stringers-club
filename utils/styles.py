@@ -564,7 +564,7 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
 }
 
 /* ── Fixed bottom row for nav rendered via st.page_link ── */
-.bottom-nav-mount + div[data-testid="stHorizontalBlock"] {
+[data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) {
     position: fixed !important;
     left: 0 !important;
     right: 0 !important;
@@ -575,17 +575,24 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
     background: #ffffff !important;
     border-top: 1px solid #e0e0e0 !important;
     box-shadow: 0 -2px 12px rgba(0,0,0,0.08) !important;
+}
+
+[data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) .bottom-nav-sentinel {
+    display: none !important;
+}
+
+[data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) [data-testid="stHorizontalBlock"] {
     display: flex !important;
     flex-wrap: nowrap !important;
     gap: 6px !important;
 }
 
-.bottom-nav-mount + div[data-testid="stHorizontalBlock"] > div {
+[data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) [data-testid="stHorizontalBlock"] > div {
     min-width: 0 !important;
     flex: 1 1 0 !important;
 }
 
-.bottom-nav-mount + div[data-testid="stHorizontalBlock"] [data-testid="stPageLink"] a {
+[data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) [data-testid="stPageLink"] a {
     min-height: 52px !important;
     padding: 6px 2px !important;
     border: none !important;
@@ -594,12 +601,12 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
     box-shadow: none !important;
 }
 
-.bottom-nav-mount + div[data-testid="stHorizontalBlock"] [data-testid="stPageLink"] a:hover {
+[data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) [data-testid="stPageLink"] a:hover {
     background: rgba(52,168,83,0.10) !important;
     color: #1e8e3e !important;
 }
 
-.bottom-nav-mount + div[data-testid="stHorizontalBlock"] [data-testid="stPageLink"] a p {
+[data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) [data-testid="stPageLink"] a p {
     font-size: 0.68rem !important;
     font-weight: 700 !important;
     margin-top: 2px !important;

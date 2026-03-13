@@ -26,11 +26,12 @@ def bottom_nav(current_page: str = ""):
     is_coach = player and player.get("role") in ("coach", "admin")
     items = _COACH_NAV if is_coach else _PLAYER_NAV
 
-    st.markdown('<div class="bottom-nav-mount"></div>', unsafe_allow_html=True)
-    cols = st.columns(len(items), vertical_alignment="center")
-    for col, (label, icon, path) in zip(cols, items):
-        with col:
-            st.page_link(path, label=label, icon=icon, use_container_width=True)
+    with st.container():
+        st.markdown('<div class="bottom-nav-sentinel"></div>', unsafe_allow_html=True)
+        cols = st.columns(len(items), vertical_alignment="center")
+        for col, (label, icon, path) in zip(cols, items):
+            with col:
+                st.page_link(path, label=label, icon=icon, use_container_width=True)
 
 
 def show_back_button():
