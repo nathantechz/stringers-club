@@ -14,14 +14,42 @@ st.title("🗓️ My Activities")
 
 player_id = current["id"]
 
-attendance = (
-    get_client()
-    .table("attendance")
-    .select("id, status, fee_charged, amount_paid, coach_note, session:sessions(id, date, slot, venue, court_numbers)")
-    .eq("player_id", player_id)
-    .order("created_at", desc=True)
-    .execute().data
-)
+try:
+    attendance = (
+        get_client()
+        .table("attendance")
+        .select("id, status, fee_charged, amount_paid, coach_note, session:sessions(id, date, slot, venue, court_numbers)")
+        .eq("player_id", player_id)
+        .order("created_at", desc=True)
+        .execute().data
+    )
+except Exception:
+    # Fallback for projects where embedded relation metadata is unavailable.
+    attendance_rows = (
+        get_client()
+        .table("attendance")
+        .select("id, status, fee_charged, amount_paid, coach_note, session_id")
+        .eq("player_id", player_id)
+        .order("created_at", desc=True)
+        .execute().data
+    )
+    session_ids = [r.get("session_id") for r in attendance_rows if r.get("session_id")]
+    sessions_map = {}
+    if session_ids:
+        sessions = (
+            get_client()
+            .table("sessions")
+            .select("id, date, slot, venue, court_numbers")
+            .in_("id", session_ids)
+            .execute().data
+        )
+        sessions_map = {s["id"]: s for s in sessions}
+
+    attendance = []
+    for r in attendance_rows:
+        row = dict(r)
+        row["session"] = sessions_map.get(r.get("session_id"), {})
+        attendance.append(row)
 
 if not attendance:
     st.info("No activities yet. Go to Games and join a hosted activity.")
