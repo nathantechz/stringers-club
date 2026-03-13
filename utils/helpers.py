@@ -37,6 +37,9 @@ def bottom_nav(current_page: str = ""):
     is_coach = is_coach_view()
     items = _COACH_NAV if is_coach else _PLAYER_NAV
 
+    # Reserve space so fixed bottom nav never overlaps page content.
+    st.markdown('<div class="bottom-nav-spacer"></div>', unsafe_allow_html=True)
+
     with st.container():
         st.markdown('<div class="bottom-nav-sentinel"></div>', unsafe_allow_html=True)
         cols = st.columns(len(items), vertical_alignment="center")

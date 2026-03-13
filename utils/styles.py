@@ -569,7 +569,10 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
 }
 
 [data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) [data-testid="stHorizontalBlock"] {
-    position: sticky !important;
+    position: fixed !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: min(700px, 100vw) !important;
     bottom: 0 !important;
     z-index: 9999 !important;
     margin: 0 !important;
@@ -580,6 +583,11 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
     display: flex !important;
     flex-wrap: nowrap !important;
     gap: 6px !important;
+    box-sizing: border-box !important;
+}
+
+.bottom-nav-spacer {
+    height: calc(74px + env(safe-area-inset-bottom)) !important;
 }
 
 [data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) [data-testid="stHorizontalBlock"] > div {
