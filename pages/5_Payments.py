@@ -29,13 +29,38 @@ else:
     st.title("💳 Submit Payment Proof")
     selected_player_id = current["id"]
 
-unpaid = (
-    get_client().table("attendance")
-    .select("id, fee_charged, amount_paid, session_id, session:sessions(date, slot, venue, court_numbers)")
-    .eq("player_id", selected_player_id)
-    .eq("status", "confirmed")
-    .execute().data
-)
+try:
+    unpaid = (
+        get_client().table("attendance")
+        .select("id, fee_charged, amount_paid, session_id, session:sessions(date, slot, venue, court_numbers)")
+        .eq("player_id", selected_player_id)
+        .eq("status", "confirmed")
+        .execute().data
+    )
+except Exception:
+    # Fallback: some Supabase projects may not have embedded relation metadata cached.
+    attendance_rows = (
+        get_client().table("attendance")
+        .select("id, fee_charged, amount_paid, session_id")
+        .eq("player_id", selected_player_id)
+        .eq("status", "confirmed")
+        .execute().data
+    )
+    session_ids = [r.get("session_id") for r in attendance_rows if r.get("session_id")]
+    sessions_map = {}
+    if session_ids:
+        sessions = (
+            get_client().table("sessions")
+            .select("id, date, slot, venue, court_numbers")
+            .in_("id", session_ids)
+            .execute().data
+        )
+        sessions_map = {s["id"]: s for s in sessions}
+    unpaid = []
+    for r in attendance_rows:
+        row = dict(r)
+        row["session"] = sessions_map.get(r.get("session_id"), {})
+        unpaid.append(row)
 unpaid = [u for u in unpaid if (u.get("fee_charged", 0) - u.get("amount_paid", 0)) > 0]
 
 if unpaid:
@@ -75,7 +100,7 @@ with st.form("payment_form", clear_on_submit=True):
             st.warning("No unpaid activities found.")
         else:
             remaining = float(amount)
-            for u in sorted(unpaid, key=lambda x: x.get("session", {}).get("date", "")):
+            for u in sorted(unpaid, key=lambda x: (x.get("session", {}) or {}).get("date", "")):
                 if remaining <= 0:
                     break
                 due = u["fee_charged"] - u["amount_paid"]
