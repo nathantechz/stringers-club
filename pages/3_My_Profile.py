@@ -20,19 +20,20 @@ try:
         .table("attendance")
         .select("id, status, fee_charged, amount_paid, coach_note, session:sessions(id, date, slot, venue, court_numbers)")
         .eq("player_id", player_id)
-        .order("created_at", desc=True)
         .execute().data
     )
 except Exception:
     # Fallback for projects where embedded relation metadata is unavailable.
-    attendance_rows = (
-        get_client()
-        .table("attendance")
-        .select("id, status, fee_charged, amount_paid, coach_note, session_id")
-        .eq("player_id", player_id)
-        .order("created_at", desc=True)
-        .execute().data
-    )
+    try:
+        attendance_rows = (
+            get_client()
+            .table("attendance")
+            .select("id, status, fee_charged, amount_paid, coach_note, session_id")
+            .eq("player_id", player_id)
+            .execute().data
+        )
+    except Exception:
+        attendance_rows = []
     session_ids = [r.get("session_id") for r in attendance_rows if r.get("session_id")]
     sessions_map = {}
     if session_ids:
@@ -50,6 +51,9 @@ except Exception:
         row = dict(r)
         row["session"] = sessions_map.get(r.get("session_id"), {})
         attendance.append(row)
+
+# Sort consistently by session date (latest first) without relying on DB order columns.
+attendance.sort(key=lambda a: str((a.get("session", {}) or {}).get("date", "")), reverse=True)
 
 if not attendance:
     st.info("No activities yet. Go to Games and join a hosted activity.")
