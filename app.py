@@ -1,6 +1,6 @@
 import streamlit as st
 from utils.styles import inject_mobile_css
-from utils.helpers import bottom_nav
+from utils.helpers import bottom_nav, is_coach_view
 from utils.supabase_client import fetch_all, fetch_view, confirm_request, update_row
 from utils.auth import login_gate, logout
 
@@ -117,7 +117,7 @@ st.divider()
 
 # ── Activity Center ──
 players = fetch_all("players", filters={"is_active": True}, order="name")
-is_coach = current.get("role") in ("coach", "admin")
+is_coach = is_coach_view()
 
 if is_coach:
     st.markdown(

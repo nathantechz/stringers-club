@@ -1,7 +1,7 @@
 import streamlit as st
 
 from utils.styles import inject_mobile_css
-from utils.helpers import bottom_nav
+from utils.helpers import bottom_nav, is_coach_view
 from utils.auth import login_gate
 from utils.supabase_client import fetch_all, get_client, record_payment_with_audit
 
@@ -9,7 +9,7 @@ st.set_page_config(page_title="Payments | StringerS", page_icon="💳", layout="
 inject_mobile_css()
 
 current = login_gate()
-is_coach = current.get("role") in ("coach", "admin")
+is_coach = is_coach_view()
 
 if is_coach:
     st.title("💳 Player Payments")

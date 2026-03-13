@@ -1,6 +1,6 @@
 import streamlit as st
 from utils.styles import inject_mobile_css
-from utils.helpers import bottom_nav, skill_label
+from utils.helpers import bottom_nav, skill_label, is_coach_view
 from utils.auth import login_gate, set_player_password
 from utils.supabase_client import fetch_all, insert_row, update_row
 
@@ -9,7 +9,7 @@ inject_mobile_css()
 
 current = login_gate()
 
-if current.get("role") not in ("coach", "admin"):
+if not is_coach_view():
     st.warning("Coach access only.")
     bottom_nav("4_Manage_Players.py")
     st.stop()

@@ -241,4 +241,6 @@ def logout():
     _clear_ls()
     for k in ["authenticated_player", "current_player", "_auth_ls_checked"]:
         st.session_state.pop(k, None)
+    for k in ["force_player_view"]:
+        st.session_state.pop(k, None)
     st.rerun()

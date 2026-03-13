@@ -22,7 +22,10 @@ _COACH_NAV = [
 def bottom_nav(current_page: str = ""):
     """Render bottom nav with Streamlit-native links (cloud-safe routing)."""
     player = st.session_state.get("authenticated_player") or st.session_state.get("current_player")
-    is_coach = player and player.get("role") in ("coach", "admin")
+    role_is_coach = player and player.get("role") in ("coach", "admin")
+    if role_is_coach:
+        st.toggle("Player View", key="force_player_view", help="Preview the app as a player")
+    is_coach = is_coach_view()
     items = _COACH_NAV if is_coach else _PLAYER_NAV
 
     with st.container():
@@ -31,6 +34,15 @@ def bottom_nav(current_page: str = ""):
         for col, (label, icon, path) in zip(cols, items):
             with col:
                 st.page_link(path, label=label, icon=icon, use_container_width=True)
+
+
+    def is_coach_view() -> bool:
+        """True when UI should behave as coach/admin view."""
+        player = st.session_state.get("authenticated_player") or st.session_state.get("current_player")
+        role_is_coach = bool(player and player.get("role") in ("coach", "admin"))
+        if not role_is_coach:
+            return False
+        return not st.session_state.get("force_player_view", False)
 
 
 def show_back_button():

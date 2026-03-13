@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date, timedelta, datetime, time
 from utils.styles import inject_mobile_css
-from utils.helpers import bottom_nav, status_badge
+from utils.helpers import bottom_nav, status_badge, is_coach_view
 from utils.auth import login_gate, set_player_password
 from utils.supabase_client import (
     fetch_all, fetch_view, insert_row, update_row, delete_row, bulk_update,
@@ -14,7 +14,7 @@ inject_mobile_css()
 
 current = login_gate()
 
-if current.get("role") not in ("coach", "admin"):
+if not is_coach_view():
     st.warning("Coach access only.")
     bottom_nav("2_Coach_Dashboard.py")
     st.stop()
