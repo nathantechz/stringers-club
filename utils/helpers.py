@@ -8,7 +8,6 @@ _PLAYER_NAV = [
     ("Games", ":material/sports_tennis:", "pages/1_Join_Games.py"),
     ("Activities", ":material/event_note:", "pages/3_My_Profile.py"),
     ("Payments", ":material/payments:", "pages/5_Payments.py"),
-    ("Stats", ":material/analytics:", "pages/6_Analytics.py"),
 ]
 
 _COACH_NAV = [
