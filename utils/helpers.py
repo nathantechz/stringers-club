@@ -26,7 +26,7 @@ def bottom_nav(current_page: str = ""):
     is_coach = player and player.get("role") in ("coach", "admin")
     items = _COACH_NAV if is_coach else _PLAYER_NAV
 
-    st.markdown('<div style="height:74px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="bottom-nav-mount"></div>', unsafe_allow_html=True)
     cols = st.columns(len(items), vertical_alignment="center")
     for col, (label, icon, path) in zip(cols, items):
         with col:
