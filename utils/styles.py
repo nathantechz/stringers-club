@@ -495,11 +495,7 @@ table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 th { background: var(--surface); color: var(--accent2); padding: 8px 10px; text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing:0.5px; border-bottom: 1.5px solid var(--border); }
 td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
 
-/* ── Columns: stack on very narrow ── */
-@media (max-width: 500px) {
-    [data-testid="stColumns"] { flex-direction: column !important; }
-    [data-testid="stColumns"] > div { width: 100% !important; }
-}
+/* ── Keep columns horizontal on mobile (needed for bottom nav row) ── */
 
 /* ── Skill badge pill ── */
 .skill-badge {
@@ -548,23 +544,23 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    background: var(--card) !important;
-    border: 1.5px solid var(--border) !important;
-    border-radius: var(--radius) !important;
-    padding: 16px 8px !important;
+    background: #ffffff !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 12px !important;
+    padding: 8px 4px !important;
     text-align: center !important;
     text-decoration: none !important;
-    min-height: 80px !important;
+    min-height: 56px !important;
     transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-    font-size: 0.82rem !important;
+    font-size: 0.74rem !important;
     font-weight: 700 !important;
-    color: var(--text) !important;
+    color: #202124 !important;
 }
 [data-testid="stPageLink"] a:hover {
-    border-color: var(--accent2) !important;
-    background: rgba(234,88,12,0.06) !important;
-    box-shadow: 0 4px 16px rgba(234,88,12,0.14) !important;
-    color: var(--accent2) !important;
+    border-color: #34a853 !important;
+    background: rgba(52,168,83,0.08) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
+    color: #1e8e3e !important;
 }
 </style>
 """, unsafe_allow_html=True)
