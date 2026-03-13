@@ -111,15 +111,19 @@ def set_player_fee(attendance_id: str, session_id: str, player_id: str,
     """Set or update a player's fee for a session and log it."""
     action = "fee_set" if old_fee == 0 else "fee_updated"
     update_row("attendance", attendance_id, {"fee_charged": new_fee})
-    insert_row("fee_audit_log", {
-        "attendance_id": attendance_id,
-        "player_id": player_id,
-        "session_id": session_id,
-        "action": action,
-        "old_value": float(old_fee),
-        "new_value": float(new_fee),
-        "changed_by": changed_by,
-    })
+    try:
+        insert_row("fee_audit_log", {
+            "attendance_id": attendance_id,
+            "player_id": player_id,
+            "session_id": session_id,
+            "action": action,
+            "old_value": float(old_fee),
+            "new_value": float(new_fee),
+            "changed_by": changed_by,
+        })
+    except Exception:
+        # Keep core workflow running even if audit table is not deployed yet.
+        pass
 
 
 def record_payment_with_audit(attendance_id: str, session_id: str,
@@ -147,16 +151,20 @@ def record_payment_with_audit(attendance_id: str, session_id: str,
     })
 
     # Audit log
-    insert_row("fee_audit_log", {
-        "attendance_id": attendance_id,
-        "player_id": player_id,
-        "session_id": session_id,
-        "action": "payment_recorded",
-        "old_value": old_paid,
-        "new_value": new_paid,
-        "changed_by": changed_by,
-        "notes": notes,
-    })
+    try:
+        insert_row("fee_audit_log", {
+            "attendance_id": attendance_id,
+            "player_id": player_id,
+            "session_id": session_id,
+            "action": "payment_recorded",
+            "old_value": old_paid,
+            "new_value": new_paid,
+            "changed_by": changed_by,
+            "notes": notes,
+        })
+    except Exception:
+        # Keep payment recording available if fee_audit_log is missing.
+        pass
 
 
 # ── Venue / Court constants ─────────────────────────────────

@@ -122,7 +122,7 @@ else:
 
         st.markdown(f"""
         <div class="game-card">
-            <strong>{sdate} • {sslot.title()}</strong> &nbsp; {badge}{due_html}
+              <strong>{sdate} • {sslot}</strong> &nbsp; {badge}{due_html}
             <br>{venue_str}Fee: ₹{fee:.0f} &nbsp;|&nbsp; Paid: ₹{paid:.0f}{note_html}
         </div>
         """, unsafe_allow_html=True)

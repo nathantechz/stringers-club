@@ -1,12 +1,12 @@
 import streamlit as st
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, time
 from utils.styles import inject_mobile_css
 from utils.helpers import bottom_nav, status_badge
 from utils.auth import login_gate, set_player_password
 from utils.supabase_client import (
     fetch_all, fetch_view, insert_row, update_row, delete_row, bulk_update,
     confirm_request, reject_request, send_invite, bulk_confirm, upsert_row,
-    set_player_fee, VENUES,
+    VENUES,
 )
 
 st.set_page_config(page_title="Coach Dashboard | StringerS", page_icon="👨‍🏫", layout="wide", initial_sidebar_state="collapsed")
@@ -16,8 +16,25 @@ current = login_gate()
 
 st.title("👨‍🏫 Coach Dashboard")
 
+
+def _slot_to_time(slot_val: str) -> time:
+    """Parse saved slot text like '07:30 AM' into a time object for time_input."""
+    if not slot_val:
+        return time(7, 30)
+    for fmt in ("%I:%M %p", "%H:%M"):
+        try:
+            return datetime.strptime(str(slot_val).strip(), fmt).time()
+        except ValueError:
+            continue
+    return time(7, 30)
+
+
+def _format_slot(t: time) -> str:
+    """Store slot in Playo-like format, e.g. '07:30 AM'."""
+    return t.strftime("%I:%M %p")
+
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-    "📋 Requests", "📩 Invites", "➕ Session", "💰 Fees", "⭐ Rate Players", "🔐 Passwords",
+    "📋 Requests", "📩 Invites", "➕ Session", "💰 Session Fees", "⭐ Rate Players", "🔐 Passwords",
 ])
 
 # ═══════════════════════════════════════════════════════════
@@ -57,7 +74,7 @@ with tab1:
             st.markdown(f"""
             <div class="game-card">
                 <strong>{emoji} {pname}</strong><br>
-                {sdate} • {sslot.title()} &nbsp; {status_badge('pending')}
+                {sdate} • {sslot} &nbsp; {status_badge('pending')}
             </div>
             """, unsafe_allow_html=True)
 
@@ -74,7 +91,7 @@ with tab1:
 
     sessions = fetch_view("session_slots")
     if sessions:
-        session_labels = {s["id"]: f"{s['date']} • {s['slot'].title()}" for s in sessions}
+        session_labels = {s["id"]: f"{s['date']} • {s['slot']}" for s in sessions}
         sel_sid = st.selectbox(
             "Pick a session",
             options=list(session_labels.keys()),
@@ -115,7 +132,7 @@ with tab2:
     if not all_players or not sessions:
         st.info("Need at least one player and one session to send invites.")
     else:
-        session_labels = {s["id"]: f"{s['date']} • {s['slot'].title()} ({s.get('slots_left', '?')} left)" for s in sessions}
+        session_labels = {s["id"]: f"{s['date']} • {s['slot']} ({s.get('slots_left', '?')} left)" for s in sessions}
 
         selected_player = st.selectbox(
             "Select Player",
@@ -155,7 +172,8 @@ with tab3:
         st.subheader("Create a New Session")
         with st.form("create_session", clear_on_submit=True):
             sess_date = st.date_input("Date", value=date.today() + timedelta(days=1))
-            sess_slot = st.selectbox("Slot", ["morning", "evening"])
+            sess_time = st.time_input("Start Time", value=time(7, 30), step=timedelta(minutes=15))
+            sess_slot = _format_slot(sess_time)
             venue = st.selectbox("Venue", list(VENUES.keys()))
             available_courts = VENUES[venue]["courts"]
             num_courts = st.number_input(
@@ -168,8 +186,6 @@ with tab3:
                 default=available_courts[:num_courts],
             )
             max_players = st.number_input("Max Players", min_value=2, max_value=30, value=num_courts * 4)
-            fee = st.number_input("Fee per Player (₹)", min_value=0.0, value=100.0, step=10.0)
-            notes = st.text_input("Notes (optional)")
 
             if st.form_submit_button("🏟️ Create Session"):
                 court_str = ",".join(str(c) for c in sorted(court_numbers))
@@ -180,8 +196,7 @@ with tab3:
                     "num_courts": len(court_numbers),
                     "court_numbers": court_str,
                     "max_players": max_players,
-                    "fee_per_player": float(fee),
-                    "notes": notes or None,
+                    "fee_per_player": 0,
                 })
                 st.success(f"Session created for {sess_date} ({sess_slot}) at {venue}! 🎉")
                 st.rerun()
@@ -194,7 +209,7 @@ with tab3:
             st.info("No sessions to edit.")
         else:
             edit_labels = {
-                s["id"]: f"{s['date']} • {s['slot'].title()} — {s.get('venue', '?')} (Courts: {s.get('court_numbers', '?')})"
+                s["id"]: f"{s['date']} • {s['slot']} — {s.get('venue', '?')} (Courts: {s.get('court_numbers', '?')})"
                 for s in all_sessions
             }
             edit_sid = st.selectbox("Session", list(edit_labels.keys()),
@@ -202,6 +217,7 @@ with tab3:
             sess = next(s for s in all_sessions if s["id"] == edit_sid)
 
             with st.form(f"edit_session_{edit_sid}"):
+                e_time = st.time_input("Start Time", value=_slot_to_time(sess.get("slot", "")), step=timedelta(minutes=15))
                 e_venue = st.selectbox("Venue", list(VENUES.keys()),
                                        index=list(VENUES.keys()).index(sess.get("venue", "Pro-Sports")))
                 e_avail = VENUES[e_venue]["courts"]
@@ -210,91 +226,56 @@ with tab3:
                                           default=[c for c in current_courts if c in e_avail])
                 e_max = st.number_input("Max Players", min_value=2, max_value=30,
                                         value=sess.get("max_players", 8))
-                e_fee = st.number_input("Fee per Player (₹)", min_value=0.0,
-                                        value=float(sess.get("fee_per_player", 0)), step=10.0)
-                e_notes = st.text_input("Notes", value=sess.get("notes", "") or "")
 
                 if st.form_submit_button("💾 Save Changes"):
                     court_str = ",".join(str(c) for c in sorted(e_courts))
                     update_row("sessions", edit_sid, {
+                        "slot": _format_slot(e_time),
                         "venue": e_venue,
                         "num_courts": len(e_courts),
                         "court_numbers": court_str,
                         "max_players": e_max,
-                        "fee_per_player": float(e_fee),
-                        "notes": e_notes or None,
                     })
                     st.success("Session updated!")
                     st.rerun()
 
 # ═══════════════════════════════════════════════════════════
-# TAB 4 — Manage Per-Player Fees
+# TAB 4 — Session-level Fees (assign one fee to all players)
 # ═══════════════════════════════════════════════════════════
 with tab4:
-    st.subheader("Set / Update Player Fees")
+    st.subheader("Set Fee For All Players In A Session")
 
     all_sessions = fetch_view("session_slots")
     if not all_sessions:
         st.info("No sessions yet.")
     else:
         fee_labels = {
-            s["id"]: f"{s['date']} • {s['slot'].title()} — {s.get('venue', '?')}"
+            s["id"]: f"{s['date']} • {s['slot']} — {s.get('venue', '?')}"
             for s in all_sessions
         }
         fee_sid = st.selectbox("Session", list(fee_labels.keys()),
                                format_func=lambda x: fee_labels[x], key="fee_sess")
-        fee_sess = next(s for s in all_sessions if s["id"] == fee_sid)
-        default_fee = float(fee_sess.get("fee_per_player", 0))
-
         roster = fetch_all("attendance", filters={"session_id": fee_sid})
-        players_map = {p["id"]: p for p in fetch_all("players")}
+        confirmed = [r for r in roster if r.get("status") == "confirmed"]
 
-        if not roster:
-            st.info("No players in this session yet.")
+        if not confirmed:
+            st.info("No confirmed players in this session yet.")
         else:
-            st.caption(f"Session default fee: ₹{default_fee:.0f}")
-            for r in roster:
-                p = players_map.get(r["player_id"], {})
-                pname = p.get("name", "?")
-                old_fee = float(r.get("fee_charged", 0))
-                paid = float(r.get("amount_paid", 0))
-
-                badge = status_badge(r["status"])
-                paid_badge = ""
-                if r["status"] == "confirmed":
-                    if paid >= old_fee and old_fee > 0:
-                        paid_badge = ' <span class="badge-confirmed">PAID</span>'
-                    elif old_fee > 0:
-                        paid_badge = f' <span class="badge-due">₹{old_fee - paid:.0f} due</span>'
-
-                st.markdown(f"""
-                <div class="game-card">
-                    <strong>{p.get('avatar_emoji', '🏸')} {pname}</strong> {badge}{paid_badge}
-                    <br>Fee: ₹{old_fee:.0f} &nbsp;|&nbsp; Paid: ₹{paid:.0f}
-                </div>
-                """, unsafe_allow_html=True)
-
-                with st.expander(f"Update fee for {pname}"):
-                    new_fee = st.number_input(
-                        f"Fee for {pname} (₹)", min_value=0.0,
-                        value=old_fee if old_fee > 0 else default_fee,
-                        step=10.0, key=f"fee_{r['id']}",
-                    )
-                    if st.button("Save Fee", key=f"savefee_{r['id']}"):
-                        set_player_fee(
-                            attendance_id=r["id"],
-                            session_id=fee_sid,
-                            player_id=r["player_id"],
-                            old_fee=old_fee,
-                            new_fee=float(new_fee),
-                            changed_by="coach",
-                        )
-                        st.success(f"Fee updated to ₹{new_fee:.0f} for {pname}")
-                        st.rerun()
+            st.caption(f"Confirmed players: {len(confirmed)}")
+            all_fee = st.number_input("Fee for all confirmed players (₹)", min_value=0.0, value=100.0, step=10.0)
+            if st.button("Apply Fee To All Confirmed Players"):
+                for r in confirmed:
+                    update_row("attendance", r["id"], {"fee_charged": float(all_fee)})
+                st.success(f"Applied ₹{all_fee:.0f} to {len(confirmed)} confirmed players.")
+                st.rerun()
 
     st.divider()
     st.subheader("📜 Fee Audit Log")
-    audit = fetch_all("fee_audit_log", order="created_at")
+    try:
+        audit = fetch_all("fee_audit_log", order="created_at")
+    except Exception:
+        audit = []
+        st.info("Fee audit log table is not available yet. Run `migration_v5.sql` in Supabase SQL Editor.")
     if audit:
         players_map_all = {p["id"]: p for p in fetch_all("players")}
         for entry in reversed(audit[-50:]):

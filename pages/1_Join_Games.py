@@ -18,7 +18,7 @@ if not sessions:
     st.info("No sessions available right now. Check back later!")
     st.stop()
 
-from datetime import date as dt_date
+from datetime import date as dt_date, datetime
 
 upcoming = [s for s in sessions if s["date"] >= str(dt_date.today())]
 upcoming.sort(key=lambda s: (s["date"], s["slot"]))
@@ -34,14 +34,19 @@ my_session_map = {a["session_id"]: a for a in my_attendance}
 for s in upcoming:
     slots_left = s.get("slots_left", "?")
     confirmed = s.get("confirmed_count", 0)
-    slot_emoji = "🌅" if s["slot"] == "morning" else "🌆"
+    slot_txt = str(s.get("slot", ""))
+    try:
+        slot_hour = datetime.strptime(slot_txt, "%I:%M %p").hour
+        slot_emoji = "🌅" if slot_hour < 12 else "🌆"
+    except ValueError:
+        slot_emoji = "🌅" if "morning" in slot_txt.lower() else "🌆"
 
     venue = s.get('venue', 'Pro-Sports')
     courts = s.get('court_numbers', '1')
 
     st.markdown(f"""
     <div class="game-card">
-        <h3>{slot_emoji} {s['date']}  •  {s['slot'].title()}</h3>
+            <h3>{slot_emoji} {s['date']}  •  {s['slot']}</h3>
         <p>📍 {venue} — Court {courts} &nbsp;|&nbsp;
            💰 ₹{s.get('fee_per_player', 0)} per player &nbsp;|&nbsp;
            🟢 {confirmed} confirmed &nbsp;|&nbsp;

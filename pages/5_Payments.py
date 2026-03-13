@@ -53,7 +53,7 @@ with tab1:
             courts = s.get("court_numbers", "")
             loc = f" — 📍 {venue} Court {courts}" if venue else ""
             st.markdown(
-                f"- {s.get('date', '?')} {s.get('slot', '?').title()}{loc} — "
+                f"- {s.get('date', '?')} {s.get('slot', '?')}{loc} — "
                 f"₹{u['fee_charged']:.0f} charged, ₹{u['amount_paid']:.0f} paid, "
                 f'<span class="badge-due">₹{due:.0f} due</span>',
                 unsafe_allow_html=True,
