@@ -2,36 +2,44 @@
 import streamlit as st
 
 # ── Bottom navigation items ──────────────────────────────
-# (label, icon for st.page_link, page path)
+# (label, material icon name, url path, page key)
 _PLAYER_NAV = [
-    ("Home",     ":material/home:",          "app.py"),
-    ("Games",    ":material/sports_tennis:", "pages/1_Join_Games.py"),
-    ("Profile",  ":material/person:",        "pages/3_My_Profile.py"),
-    ("Payments", ":material/payments:",      "pages/5_Payments.py"),
-    ("Stats",    ":material/analytics:",     "pages/6_Analytics.py"),
+    ("Home", "home", "/", "app.py"),
+    ("Games", "sports_tennis", "/1_Join_Games", "1_Join_Games.py"),
+    ("Profile", "person", "/3_My_Profile", "3_My_Profile.py"),
+    ("Payments", "payments", "/5_Payments", "5_Payments.py"),
+    ("Stats", "analytics", "/6_Analytics", "6_Analytics.py"),
 ]
 
 _COACH_NAV = [
-    ("Home",      ":material/home:",          "app.py"),
-    ("Games",     ":material/sports_tennis:", "pages/1_Join_Games.py"),
-    ("Dashboard", ":material/shield_person:", "pages/2_Coach_Dashboard.py"),
-    ("Players",   ":material/group:",         "pages/4_Manage_Players.py"),
-    ("Stats",     ":material/analytics:",     "pages/6_Analytics.py"),
+    ("Home", "home", "/", "app.py"),
+    ("Games", "sports_tennis", "/1_Join_Games", "1_Join_Games.py"),
+    ("Dashboard", "shield_person", "/2_Coach_Dashboard", "2_Coach_Dashboard.py"),
+    ("Players", "group", "/4_Manage_Players", "4_Manage_Players.py"),
+    ("Stats", "analytics", "/6_Analytics", "6_Analytics.py"),
 ]
 
 
 def bottom_nav(current_page: str = ""):
-    """Render a fixed bottom navigation bar using st.page_link for proper Streamlit navigation."""
+    """Render a fixed Playo-style bottom nav with icons across all pages."""
     player = st.session_state.get("authenticated_player") or st.session_state.get("current_player")
     is_coach = player and player.get("role") in ("coach", "admin")
     items = _COACH_NAV if is_coach else _PLAYER_NAV
 
-    st.markdown('<div style="height:80px;"></div>', unsafe_allow_html=True)  # spacer
+    links = ""
+    for label, icon, href, page_key in items:
+        active = "active" if current_page == page_key else ""
+        links += (
+            f'<a href="{href}" target="_self" class="{active}">'
+            f'<span class="material-symbols-rounded">{icon}</span>'
+            f'<span class="nav-label">{label}</span>'
+            f'</a>'
+        )
 
-    cols = st.columns(len(items))
-    for col, (label, icon, path) in zip(cols, items):
-        with col:
-            st.page_link(path, label=label, icon=icon, use_container_width=True)
+    st.markdown(
+        f'<div class="bottom-nav"><div class="bottom-nav-inner">{links}</div></div>',
+        unsafe_allow_html=True,
+    )
 
 
 def show_back_button():
