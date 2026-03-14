@@ -13,7 +13,6 @@ st.set_page_config(page_title="Coach Dashboard | StringerS", page_icon="👨‍�
 inject_mobile_css()
 
 current = login_gate()
-bottom_nav("2_Coach_Dashboard.py")  # Reserve space at top
 
 if not is_coach_view():
     st.warning("Coach access only.")
@@ -362,3 +361,5 @@ with tab6:
                     set_player_password(sel_pwd_p["id"], new_pwd)
                     st.success(f"Password set for {sel_pwd_p['name']}!")
                     st.rerun()
+
+bottom_nav("2_Coach_Dashboard.py")

@@ -9,7 +9,6 @@ st.set_page_config(page_title="Expenditure | StringerS", page_icon="📒", layou
 inject_mobile_css()
 
 current = login_gate()
-bottom_nav("7_Expenditure.py")  # Reserve space at top
 
 st.title("📒 Expenditure Tracker")
 
@@ -73,3 +72,5 @@ with tab2:
             if st.button("🗑️ Delete", key=f"del_{exp['id']}"):
                 delete_row("expenditures", exp["id"])
                 st.rerun()
+
+bottom_nav("7_Expenditure.py")

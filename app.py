@@ -14,7 +14,6 @@ inject_mobile_css()
 
 # ── Auth gate ──
 current = login_gate()
-bottom_nav("app.py")  # Reserve space at top
 
 # ── Header row (Playo-style: greeting + logout) ──
 col_g, col_out = st.columns([4, 1])
@@ -181,3 +180,6 @@ else:
                 update_row("attendance", invite["id"], {"status": "confirmed"})
                 st.success("You're in! 🎉")
                 st.rerun()
+
+# ── Bottom Nav ──
+bottom_nav("app.py")
