@@ -587,7 +587,7 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
 }
 
 .bottom-nav-spacer {
-    height: calc(80px + env(safe-area-inset-bottom)) !important;
+    height: calc(90px + env(safe-area-inset-bottom)) !important;
 }
 
 [data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) [data-testid="stHorizontalBlock"] > div {

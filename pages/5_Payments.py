@@ -9,6 +9,7 @@ st.set_page_config(page_title="Payments | StringerS", page_icon="💳", layout="
 inject_mobile_css()
 
 current = login_gate()
+bottom_nav("5_Payments.py")  # Reserve space at top
 is_coach = is_coach_view()
 
 if is_coach:
@@ -139,5 +140,3 @@ if is_coach:
                 </div>
             </div>
             """, unsafe_allow_html=True)
-
-bottom_nav("5_Payments.py")

@@ -8,6 +8,7 @@ st.set_page_config(page_title="Join Games | StringerS", page_icon="🏸", layout
 inject_mobile_css()
 
 current = login_gate()
+bottom_nav("1_Join_Games.py")  # Reserve space at top
 
 st.title("🏸 Available Sessions")
 
@@ -119,5 +120,3 @@ for s in upcoming:
             st.warning("Session is full.")
 
     st.markdown("---")
-
-bottom_nav("1_Join_Games.py")
