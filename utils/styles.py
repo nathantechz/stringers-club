@@ -77,13 +77,13 @@ div[class*="block-container"] {
 [data-testid="stMainBlockContainer"] {
     max-width: 700px !important;
     margin: 0 auto !important;
-    padding: 16px 24px 130px 24px !important;
+    padding: 16px 24px 16px 24px !important;
 }
 @media (max-width: 768px) {
     [data-testid="stMain"] > div:first-child,
     [data-testid="stMainBlockContainer"] {
         max-width: 500px !important;
-        padding: 16px 16px 130px 16px !important;
+        padding: 16px 16px 16px 16px !important;
     }
 }
 
@@ -587,7 +587,7 @@ td { padding: 9px 10px; border-bottom: 1px solid var(--border); }
 }
 
 .bottom-nav-spacer {
-    height: calc(74px + env(safe-area-inset-bottom)) !important;
+    height: calc(80px + env(safe-area-inset-bottom)) !important;
 }
 
 [data-testid="stVerticalBlock"]:has(.bottom-nav-sentinel) [data-testid="stHorizontalBlock"] > div {
