@@ -77,13 +77,13 @@ div[class*="block-container"] {
 [data-testid="stMainBlockContainer"] {
     max-width: 700px !important;
     margin: 0 auto !important;
-    padding: 16px 24px 100px 24px !important;
+    padding: 16px 24px 130px 24px !important;
 }
 @media (max-width: 768px) {
     [data-testid="stMain"] > div:first-child,
     [data-testid="stMainBlockContainer"] {
         max-width: 500px !important;
-        padding: 16px 16px 100px 16px !important;
+        padding: 16px 16px 130px 16px !important;
     }
 }
 
