@@ -9,7 +9,12 @@ import os
 import secrets
 
 import streamlit as st
-from streamlit_js_eval import streamlit_js_eval
+try:
+    from streamlit_js_eval import streamlit_js_eval
+except ModuleNotFoundError:
+    # Fallback keeps auth usable without localStorage persistence.
+    def streamlit_js_eval(*args, **kwargs):
+        return None
 
 from utils.supabase_client import get_client, update_row
 
