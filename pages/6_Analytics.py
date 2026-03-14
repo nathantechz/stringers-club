@@ -9,10 +9,10 @@ st.set_page_config(page_title="Analytics | StringerS", page_icon="📊", layout=
 inject_mobile_css()
 
 current = login_gate()
+bottom_nav("6_Analytics.py")  # Reserve space at top
 
 if not is_coach_view():
     st.warning("Coach access only.")
-    bottom_nav("6_Analytics.py")
     st.stop()
 
 st.title("📊 Analytics")
@@ -118,5 +118,3 @@ with tab3:
                 """, unsafe_allow_html=True)
         else:
             st.success("All dues cleared! 🎉")
-
-bottom_nav("6_Analytics.py")

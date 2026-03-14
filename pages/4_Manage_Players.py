@@ -8,10 +8,10 @@ st.set_page_config(page_title="Manage Players | StringerS", page_icon="👥", la
 inject_mobile_css()
 
 current = login_gate()
+bottom_nav("4_Manage_Players.py")  # Reserve space at top
 
 if not is_coach_view():
     st.warning("Coach access only.")
-    bottom_nav("4_Manage_Players.py")
     st.stop()
 
 st.title("👥 Manage Players")
@@ -90,5 +90,3 @@ with tab2:
                         set_player_password(p["id"], new_pwd)
                     st.success("Updated!")
                     st.rerun()
-
-bottom_nav("4_Manage_Players.py")

@@ -10,6 +10,8 @@ st.set_page_config(page_title="My Activities | StringerS", page_icon="🗓️", 
 inject_mobile_css()
 
 current = login_gate()
+bottom_nav("3_My_Profile.py")  # Reserve space at top
+
 st.title("🗓️ My Activities")
 
 player_id = current["id"]
@@ -138,5 +140,3 @@ with pay_tab:
                 """,
                 unsafe_allow_html=True,
             )
-
-bottom_nav("3_My_Profile.py")
